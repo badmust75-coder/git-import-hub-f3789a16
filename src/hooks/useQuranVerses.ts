@@ -13,7 +13,8 @@ interface QuranVerseCache {
 
 const verseCache: QuranVerseCache = {};
 
-const API_BASE = 'https://alquran-api.pages.dev/api/quran/surah';
+// Using api.alquran.cloud - reliable, CORS-enabled, multiple editions in one call
+const API_BASE = 'https://api.alquran.cloud/v1/surah';
 
 export const useQuranVerses = (sourateNumber: number | null) => {
   const [verses, setVerses] = useState<QuranVerse[]>([]);
@@ -35,25 +36,26 @@ export const useQuranVerses = (sourateNumber: number | null) => {
 
     const fetchVerses = async () => {
       try {
-        const [arRes, frRes, transRes] = await Promise.all([
-          fetch(`${API_BASE}/${sourateNumber}?lang=ar`),
-          fetch(`${API_BASE}/${sourateNumber}?lang=fr`),
-          fetch(`${API_BASE}/${sourateNumber}?lang=transliteration`),
-        ]);
-
-        const [arData, frData, transData] = await Promise.all([
-          arRes.json(),
-          frRes.json(),
-          transRes.json(),
-        ]);
+        // Fetch Arabic (Uthmani), French (Hamidullah), and Transliteration in one call
+        const res = await fetch(
+          `${API_BASE}/${sourateNumber}/editions/quran-uthmani,fr.hamidullah,en.transliteration`
+        );
+        const json = await res.json();
 
         if (cancelled) return;
 
-        const combined: QuranVerse[] = (arData.verses || []).map((v: any, i: number) => ({
-          id: v.id,
-          text_arabic: v.text || '',
-          transliteration: transData.verses?.[i]?.transliteration || '',
-          translation_fr: frData.verses?.[i]?.translation || '',
+        if (json.code !== 200 || !json.data || json.data.length < 3) {
+          console.error('Quran API returned unexpected data:', json);
+          return;
+        }
+
+        const [arData, frData, transData] = json.data;
+
+        const combined: QuranVerse[] = (arData.ayahs || []).map((ayah: any, i: number) => ({
+          id: ayah.numberInSurah,
+          text_arabic: ayah.text || '',
+          transliteration: transData.ayahs?.[i]?.text || '',
+          translation_fr: frData.ayahs?.[i]?.text || '',
         }));
 
         verseCache[sourateNumber] = combined;

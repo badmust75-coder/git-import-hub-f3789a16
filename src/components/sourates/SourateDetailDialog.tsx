@@ -5,6 +5,7 @@ import { Check, BookOpen, FileText, File } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuranVerses } from '@/hooks/useQuranVerses';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface SourateDetailDialogProps {
   open: boolean;

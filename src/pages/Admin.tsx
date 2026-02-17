@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
@@ -27,12 +27,51 @@ import {
   ClipboardCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 type ViewType = 'dashboard' | 'users' | 'students' | 'ramadan' | 'ramadan-manage' | 'nourania' | 'nourania-manage' | 'alphabet' | 'invocations' | 'sourates' | 'sourates-manage' | 'sourates-validations' | 'prayer' | 'messages';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
+  const [pendingCount, setPendingCount] = useState(0);
+
+  // Fetch pending validation count
+  const { data: pendingValidations } = useQuery({
+    queryKey: ['admin-pending-validations-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('sourate_validation_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  useEffect(() => {
+    setPendingCount(pendingValidations || 0);
+  }, [pendingValidations]);
+
+  // Realtime subscription for pending count updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-pending-count')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'sourate_validation_requests',
+      }, async () => {
+        const { count } = await supabase
+          .from('sourate_validation_requests')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'pending');
+        setPendingCount(count || 0);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const { data: stats } = useQuery({
     queryKey: ['admin-dashboard-stats'],
@@ -180,6 +219,45 @@ const Admin = () => {
   return (
     <AppLayout title="Tableau de bord">
       <div className="p-4 space-y-4">
+        {/* Validation card at the TOP */}
+        <button
+          onClick={() => setCurrentView('sourates-validations')}
+          className={`w-full rounded-2xl p-4 shadow-card border transition-all duration-300 ${
+            pendingCount > 0
+              ? 'bg-red-500/10 border-red-300 dark:border-red-700 hover:bg-red-500/20'
+              : 'bg-green-500/10 border-green-300 dark:border-green-700 hover:bg-green-500/20'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                pendingCount > 0 ? 'bg-red-500/20' : 'bg-green-500/20'
+              }`}>
+                <ClipboardCheck className={`h-6 w-6 ${
+                  pendingCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+                }`} />
+              </div>
+              <div className="text-left">
+                <p className={`font-bold text-base ${
+                  pendingCount > 0 ? 'text-red-700 dark:text-red-300' : 'text-green-700 dark:text-green-300'
+                }`}>
+                  Validations en attente
+                </p>
+                <p className={`text-sm ${
+                  pendingCount > 0 ? 'text-red-600/70 dark:text-red-400/70' : 'text-green-600/70 dark:text-green-400/70'
+                }`}>
+                  {pendingCount > 0 ? 'Sourate(s) à valider' : 'Aucune validation en attente'}
+                </p>
+              </div>
+            </div>
+            {pendingCount > 0 && (
+              <Badge className="bg-red-500 text-white hover:bg-red-600 text-lg px-3 py-1 animate-pulse">
+                {pendingCount}
+              </Badge>
+            )}
+          </div>
+        </button>
+
         <h2 className="text-xl font-bold text-foreground mb-4">Gestion des élèves</h2>
 
         <div className="space-y-3">
@@ -293,15 +371,6 @@ const Admin = () => {
             >
               <Settings className="h-4 w-4 mr-2" />
               Gérer contenu & débloquer
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={() => setCurrentView('sourates-validations')}
-            >
-              <ClipboardCheck className="h-4 w-4 mr-2" />
-              Validations en attente
             </Button>
           </div>
 
