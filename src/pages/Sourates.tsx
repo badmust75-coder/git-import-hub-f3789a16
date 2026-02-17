@@ -267,6 +267,8 @@ const SouratesPage = () => {
 
       if (allValidated && !sourateProgress.get(sourateDbId)?.is_validated) {
         fireSuccess();
+        // Close the detail dialog and return to path view
+        setSelectedSourate(null);
         const nextNumber = sourateNumber - 1;
         if (nextNumber >= 1) {
           const nextSourate = SOURATES_DATA.find(s => s.number === nextNumber);

@@ -40,22 +40,21 @@ const WAVE_OFFSETS = [0, -10, -16, -10, 0];
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-const getStarColors = (sourateNum: number, isValidated: boolean): { fill: string; stroke: string } => {
+const getStarColors = (sourateNum: number, isValidated: boolean): { fill: string; stroke: string; strokeWidth: number } => {
   if (isValidated) {
-    return { fill: 'hsl(142, 70%, 45%)', stroke: 'hsl(142, 70%, 35%)' };
+    return { fill: 'hsl(142, 70%, 45%)', stroke: 'hsl(35, 80%, 50%)', strokeWidth: 3 };
   }
   if (sourateNum === 1) {
-    return { fill: 'hsl(140, 40%, 85%)', stroke: 'hsl(140, 30%, 70%)' };
+    return { fill: 'hsl(140, 40%, 85%)', stroke: 'hsl(140, 30%, 70%)', strokeWidth: 1.5 };
   }
 
   let t: number;
   if (sourateNum >= 78) {
-    t = (114 - sourateNum) / (114 - 78); // 0 at 114, 1 at 78
+    t = (114 - sourateNum) / (114 - 78);
   } else {
-    t = (77 - sourateNum) / (77 - 2); // 0 at 77, 1 at 2
+    t = (77 - sourateNum) / (77 - 2);
   }
 
-  // t=0: green pastel → t=0.5: yellow → t=1: amber
   const h = lerp(140, 35, t);
   const s = lerp(40, 70, t);
   const l = lerp(85, 72, t);
@@ -64,6 +63,7 @@ const getStarColors = (sourateNum: number, isValidated: boolean): { fill: string
   return {
     fill: `hsl(${h}, ${s}%, ${l}%)`,
     stroke: `hsl(${h}, ${s}%, ${strokeL}%)`,
+    strokeWidth: 1.5,
   };
 };
 
@@ -73,6 +73,7 @@ const StarBadge = ({
   isAccessible,
   fill,
   stroke,
+  strokeWidth,
   nameFrench,
   onClick,
 }: {
@@ -81,6 +82,7 @@ const StarBadge = ({
   isAccessible: boolean;
   fill: string;
   stroke: string;
+  strokeWidth: number;
   nameFrench: string;
   onClick: () => void;
 }) => {
@@ -101,7 +103,7 @@ const StarBadge = ({
             d="M24 2 L29.5 17.5 L46 17.5 L33 27.5 L37.5 44 L24 34 L10.5 44 L15 27.5 L2 17.5 L18.5 17.5 Z"
             fill={fill}
             stroke={stroke}
-            strokeWidth="1.5"
+            strokeWidth={strokeWidth}
           />
         </svg>
         <span className={cn(
@@ -162,7 +164,7 @@ const SouratePathView = ({
                 const progress = dbId ? sourateProgress.get(dbId) : undefined;
                 const accessible = isSourateAccessible(sourate.number);
                 const isValidated = !!progress?.is_validated;
-                const { fill, stroke } = getStarColors(sourate.number, isValidated);
+                const { fill, stroke, strokeWidth } = getStarColors(sourate.number, isValidated);
 
                 // Wave offset: alternate direction per row
                 const waveDir = rowIndex % 2 === 0 ? 1 : -1;
@@ -179,6 +181,7 @@ const SouratePathView = ({
                       isAccessible={accessible}
                       fill={fill}
                       stroke={stroke}
+                      strokeWidth={strokeWidth}
                       nameFrench={sourate.name_french}
                       onClick={() => onSourateClick(sourate)}
                     />
