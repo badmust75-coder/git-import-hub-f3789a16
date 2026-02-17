@@ -13,12 +13,13 @@ import Ramadan from "./pages/Ramadan";
 import Admin from "./pages/Admin";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import PendingApproval from "./pages/PendingApproval";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isApproved, isAdmin } = useAuth();
 
   if (loading) {
     return (
@@ -30,6 +31,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // If not admin and not approved, show pending page
+  if (!isAdmin && isApproved === false) {
+    return <PendingApproval />;
   }
 
   return <>{children}</>;

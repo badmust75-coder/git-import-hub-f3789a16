@@ -7,7 +7,8 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isAdmin: boolean;
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
+  isApproved: boolean | null;
+  signUp: (email: string, password: string, fullName?: string, gender?: string, age?: number) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
@@ -28,6 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isApproved, setIsApproved] = useState<boolean | null>(null);
 
   const checkAdminRole = async (userId: string) => {
     try {
@@ -49,6 +51,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const checkApprovalStatus = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_approved')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (error) {
+        console.error('Error checking approval:', error);
+        return false;
+      }
+      return data?.is_approved ?? false;
+    } catch (err) {
+      console.error('Error in checkApprovalStatus:', err);
+      return false;
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -57,13 +77,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Use setTimeout to avoid potential race conditions
           setTimeout(async () => {
-            const adminStatus = await checkAdminRole(session.user.id);
+            const [adminStatus, approvalStatus] = await Promise.all([
+              checkAdminRole(session.user.id),
+              checkApprovalStatus(session.user.id),
+            ]);
             setIsAdmin(adminStatus);
+            setIsApproved(adminStatus ? true : approvalStatus);
           }, 0);
         } else {
           setIsAdmin(false);
+          setIsApproved(null);
         }
         
         setLoading(false);
@@ -76,8 +100,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        const adminStatus = await checkAdminRole(session.user.id);
+        const [adminStatus, approvalStatus] = await Promise.all([
+          checkAdminRole(session.user.id),
+          checkApprovalStatus(session.user.id),
+        ]);
         setIsAdmin(adminStatus);
+        setIsApproved(adminStatus ? true : approvalStatus);
       }
       
       setLoading(false);
@@ -86,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
+  const signUp = async (email: string, password: string, fullName?: string, gender?: string, age?: number) => {
     try {
       const { error } = await supabase.auth.signUp({
         email,
@@ -95,11 +123,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           emailRedirectTo: window.location.origin,
           data: {
             full_name: fullName,
+            gender,
+            age,
           },
         },
       });
       
       if (error) throw error;
+
+      // Update profile with gender and age after signup
+      // The trigger creates the profile, we update it
+      const { data: { user: newUser } } = await supabase.auth.getUser();
+      if (newUser) {
+        await supabase
+          .from('profiles')
+          .update({ full_name: fullName, gender, age })
+          .eq('user_id', newUser.id);
+        // Send push notification to admin about new registration
+        supabase.functions.invoke('send-push-notification', {
+          body: {
+            title: '📝 Nouvelle inscription',
+            body: `${fullName || email} demande à rejoindre l'application.`,
+            type: 'admin',
+          },
+        }).catch(err => console.error('Push notification error:', err));
+      }
+
       return { error: null };
     } catch (error) {
       return { error: error as Error };
@@ -123,6 +172,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     await supabase.auth.signOut();
     setIsAdmin(false);
+    setIsApproved(null);
   };
 
   const resetPassword = async (email: string) => {
@@ -143,6 +193,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     loading,
     isAdmin,
+    isApproved,
     signUp,
     signIn,
     signOut,

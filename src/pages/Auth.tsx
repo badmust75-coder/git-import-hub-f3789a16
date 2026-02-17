@@ -21,6 +21,8 @@ const Auth = () => {
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupName, setSignupName] = useState('');
+  const [signupGender, setSignupGender] = useState('');
+  const [signupAge, setSignupAge] = useState('');
   const [resetEmail, setResetEmail] = useState('');
 
   if (authLoading) {
@@ -73,7 +75,7 @@ const Auth = () => {
       return;
     }
 
-    const { error } = await signUp(signupEmail, signupPassword, signupName);
+    const { error } = await signUp(signupEmail, signupPassword, signupName, signupGender, signupAge ? parseInt(signupAge) : undefined);
 
     if (error) {
       toast({
@@ -83,8 +85,8 @@ const Auth = () => {
       });
     } else {
       toast({
-        title: "Inscription réussie !",
-        description: "Bienvenue dans Dini Bismillah !",
+        title: "Inscription envoyée !",
+        description: "Votre demande sera validée par l'enseignant. Vous serez notifié.",
       });
     }
 
@@ -258,6 +260,43 @@ const Auth = () => {
                         placeholder="Votre nom"
                         value={signupName}
                         onChange={(e) => setSignupName(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-gender">Genre</Label>
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        variant={signupGender === 'garcon' ? 'default' : 'outline'}
+                        className={`flex-1 ${signupGender === 'garcon' ? 'bg-primary' : ''}`}
+                        onClick={() => setSignupGender('garcon')}
+                      >
+                        👦 Garçon
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={signupGender === 'fille' ? 'default' : 'outline'}
+                        className={`flex-1 ${signupGender === 'fille' ? 'bg-primary' : ''}`}
+                        onClick={() => setSignupGender('fille')}
+                      >
+                        👧 Fille
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-age">Âge</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="signup-age"
+                        type="number"
+                        min={3}
+                        max={99}
+                        placeholder="Ex: 7"
+                        value={signupAge}
+                        onChange={(e) => setSignupAge(e.target.value)}
                         className="pl-10"
                       />
                     </div>

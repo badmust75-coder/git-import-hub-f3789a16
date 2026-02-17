@@ -13,6 +13,7 @@ import AdminMessaging from '@/components/admin/AdminMessaging';
 import AdminNouraniaContent from '@/components/admin/AdminNouraniaContent';
 import AdminSourateContent from '@/components/admin/AdminSourateContent';
 import AdminSourateValidations from '@/components/admin/AdminSourateValidations';
+import AdminRegistrationValidations from '@/components/admin/AdminRegistrationValidations';
 import { 
   Users, 
   GraduationCap, 
@@ -24,17 +25,19 @@ import {
   Hand,
   Settings,
   Mail,
-  ClipboardCheck
+  ClipboardCheck,
+  UserCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-type ViewType = 'dashboard' | 'users' | 'students' | 'ramadan' | 'ramadan-manage' | 'nourania' | 'nourania-manage' | 'alphabet' | 'invocations' | 'sourates' | 'sourates-manage' | 'sourates-validations' | 'prayer' | 'messages';
+type ViewType = 'dashboard' | 'users' | 'students' | 'ramadan' | 'ramadan-manage' | 'nourania' | 'nourania-manage' | 'alphabet' | 'invocations' | 'sourates' | 'sourates-manage' | 'sourates-validations' | 'registration-validations' | 'prayer' | 'messages';
 
 const Admin = () => {
   const { isAdmin, loading } = useAuth();
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [pendingCount, setPendingCount] = useState(0);
+  const [pendingRegistrations, setPendingRegistrations] = useState(0);
 
   // Fetch pending validation count
   const { data: pendingValidations } = useQuery({
@@ -49,9 +52,26 @@ const Admin = () => {
     },
   });
 
+  // Fetch pending registration count
+  const { data: pendingRegCount } = useQuery({
+    queryKey: ['admin-pending-registrations-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_approved', false);
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
   useEffect(() => {
     setPendingCount(pendingValidations || 0);
   }, [pendingValidations]);
+
+  useEffect(() => {
+    setPendingRegistrations(pendingRegCount || 0);
+  }, [pendingRegCount]);
 
   // Realtime subscription for pending count updates
   useEffect(() => {
@@ -67,6 +87,17 @@ const Admin = () => {
           .select('*', { count: 'exact', head: true })
           .eq('status', 'pending');
         setPendingCount(count || 0);
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'profiles',
+      }, async () => {
+        const { count } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_approved', false);
+        setPendingRegistrations(count || 0);
       })
       .subscribe();
 
@@ -189,6 +220,16 @@ const Admin = () => {
     );
   }
 
+  if (currentView === 'registration-validations') {
+    return (
+      <AppLayout title="Tableau de bord">
+        <div className="p-4">
+          <AdminRegistrationValidations onBack={handleBack} />
+        </div>
+      </AppLayout>
+    );
+  }
+
   if (currentView === 'messages') {
     return (
       <AppLayout title="Tableau de bord">
@@ -253,6 +294,45 @@ const Admin = () => {
             {pendingCount > 0 && (
               <Badge className="bg-red-500 text-white hover:bg-red-600 text-lg px-3 py-1 animate-pulse">
                 {pendingCount}
+              </Badge>
+            )}
+          </div>
+        </button>
+
+        {/* Registration validation card */}
+        <button
+          onClick={() => setCurrentView('registration-validations')}
+          className={`w-full rounded-2xl p-4 shadow-card border transition-all duration-300 ${
+            pendingRegistrations > 0
+              ? 'bg-red-500/10 border-red-300 dark:border-red-700 hover:bg-red-500/20'
+              : 'bg-green-500/10 border-green-300 dark:border-green-700 hover:bg-green-500/20'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                pendingRegistrations > 0 ? 'bg-red-500/20' : 'bg-green-500/20'
+              }`}>
+                <UserCheck className={`h-6 w-6 ${
+                  pendingRegistrations > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
+                }`} />
+              </div>
+              <div className="text-left">
+                <p className={`font-bold text-base ${
+                  pendingRegistrations > 0 ? 'text-red-700 dark:text-red-300' : 'text-green-700 dark:text-green-300'
+                }`}>
+                  Validation d'inscription
+                </p>
+                <p className={`text-sm ${
+                  pendingRegistrations > 0 ? 'text-red-600/70 dark:text-red-400/70' : 'text-green-600/70 dark:text-green-400/70'
+                }`}>
+                  {pendingRegistrations > 0 ? 'Inscription(s) à valider' : 'Aucune inscription en attente'}
+                </p>
+              </div>
+            </div>
+            {pendingRegistrations > 0 && (
+              <Badge className="bg-red-500 text-white hover:bg-red-600 text-lg px-3 py-1 animate-pulse">
+                {pendingRegistrations}
               </Badge>
             )}
           </div>
