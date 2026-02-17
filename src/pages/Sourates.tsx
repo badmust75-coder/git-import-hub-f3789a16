@@ -3,17 +3,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import AppLayout from '@/components/layout/AppLayout';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { useConfetti } from '@/hooks/useConfetti';
 import SourateUnlockDialog from '@/components/sourates/SourateUnlockDialog';
-import AudioPlayer from '@/components/audio/AudioPlayer';
-import { Search, Check, Lock, ChevronDown, ChevronUp, BookOpen, Brain, FileText, Video, Image, File } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import SouratePathView from '@/components/sourates/SouratePathView';
+import SourateDetailDialog from '@/components/sourates/SourateDetailDialog';
+import { Search } from 'lucide-react';
 
 // Complete list of 114 Surahs
 const SOURATES_DATA = [
@@ -136,24 +133,19 @@ const SOURATES_DATA = [
 // Display order: 114 first, then 113, ..., 1 last
 const SOURATES_ORDERED = [...SOURATES_DATA].sort((a, b) => b.number - a.number);
 
-interface VerseProgress {
-  verse_number: number;
-  is_validated: boolean;
-}
-
 const SouratesPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { fireSuccess } = useConfetti();
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedSourate, setExpandedSourate] = useState<number | null>(null);
+  const [selectedSourate, setSelectedSourate] = useState<typeof SOURATES_DATA[0] | null>(null);
   const [sourateProgress, setSourateProgress] = useState<Map<number, { is_validated: boolean; is_memorized: boolean; progress_percentage: number }>>(new Map());
   const [verseProgress, setVerseProgress] = useState<Map<string, boolean>>(new Map());
   const [adminUnlocks, setAdminUnlocks] = useState<Set<number>>(new Set());
   const [sourateContents, setSourateContents] = useState<any[]>([]);
   const [unlockDialog, setUnlockDialog] = useState<{ open: boolean; sourateName: string; sourateNumber: number }>({ open: false, sourateName: '', sourateNumber: 0 });
-  const [dbSourates, setDbSourates] = useState<Map<number, number>>(new Map()); // number -> id mapping
+  const [dbSourates, setDbSourates] = useState<Map<number, number>>(new Map());
 
   const loadAll = useCallback(async () => {
     if (!user) return;
@@ -174,12 +166,10 @@ const SouratesPage = () => {
         supabase.from('sourates').select('id, number'),
       ]);
 
-      // Map sourate number -> db id
       const idMap = new Map<number, number>();
       souratesDb?.forEach(s => idMap.set(s.number, s.id));
       setDbSourates(idMap);
 
-      // Sourate-level progress
       const pMap = new Map<number, { is_validated: boolean; is_memorized: boolean; progress_percentage: number }>();
       progressData?.forEach(p => {
         pMap.set(p.sourate_id, {
@@ -190,14 +180,12 @@ const SouratesPage = () => {
       });
       setSourateProgress(pMap);
 
-      // Verse-level progress
       const vMap = new Map<string, boolean>();
       verseData?.forEach(v => {
         vMap.set(`${v.sourate_id}-${v.verse_number}`, v.is_validated);
       });
       setVerseProgress(vMap);
 
-      // Admin unlocks
       const uSet = new Set<number>();
       unlockData?.forEach(u => uSet.add(u.sourate_id));
       setAdminUnlocks(uSet);
@@ -216,19 +204,12 @@ const SouratesPage = () => {
 
   const isSourateAccessible = (sourateNumber: number): boolean => {
     const dbId = dbSourates.get(sourateNumber);
-    if (!dbId) return sourateNumber === 114; // First sourate (114) always accessible
-
-    // First sourate (114) is always accessible
+    if (!dbId) return sourateNumber === 114;
     if (sourateNumber === 114) return true;
-
-    // Admin unlocked
     if (adminUnlocks.has(dbId)) return true;
-
-    // Previous sourate (higher number) must be validated
     const prevNumber = sourateNumber + 1;
     const prevDbId = dbSourates.get(prevNumber);
     if (!prevDbId) return true;
-    
     const prevProgress = sourateProgress.get(prevDbId);
     return prevProgress?.is_validated === true;
   };
@@ -240,7 +221,6 @@ const SouratesPage = () => {
     const currentValue = verseProgress.get(key) || false;
     const newValue = !currentValue;
 
-    // Optimistic update
     setVerseProgress(prev => {
       const newMap = new Map(prev);
       newMap.set(key, newValue);
@@ -259,7 +239,6 @@ const SouratesPage = () => {
 
       if (error) throw error;
 
-      // Recalculate sourate progress
       const newVerseProgress = new Map(verseProgress);
       newVerseProgress.set(key, newValue);
 
@@ -270,7 +249,6 @@ const SouratesPage = () => {
       const percentage = Math.round((validatedVerses / versesCount) * 100);
       const allValidated = validatedVerses === versesCount;
 
-      // Update sourate-level progress
       await supabase
         .from('user_sourate_progress')
         .upsert({
@@ -287,11 +265,8 @@ const SouratesPage = () => {
         return newMap;
       });
 
-      // If all verses validated → confetti + unlock dialog
       if (allValidated && !sourateProgress.get(sourateDbId)?.is_validated) {
         fireSuccess();
-
-        // Find next sourate
         const nextNumber = sourateNumber - 1;
         if (nextNumber >= 1) {
           const nextSourate = SOURATES_DATA.find(s => s.number === nextNumber);
@@ -308,7 +283,6 @@ const SouratesPage = () => {
       }
     } catch (error) {
       console.error('Error updating verse:', error);
-      // Revert optimistic update
       setVerseProgress(prev => {
         const newMap = new Map(prev);
         newMap.set(key, currentValue);
@@ -317,20 +291,25 @@ const SouratesPage = () => {
     }
   };
 
-  const getContentIcon = (type: string) => {
-    switch (type) {
-      case 'video': return <Video className="h-4 w-4" />;
-      case 'pdf': return <FileText className="h-4 w-4" />;
-      case 'image': return <Image className="h-4 w-4" />;
-      default: return <File className="h-4 w-4" />;
+  const handleSourateClick = (sourate: typeof SOURATES_DATA[0]) => {
+    if (!isSourateAccessible(sourate.number)) {
+      toast({
+        title: "Sourate verrouillée",
+        description: "Complétez d'abord la sourate précédente",
+        variant: "destructive",
+      });
+      return;
     }
+    setSelectedSourate(sourate);
   };
 
-  const filteredSourates = SOURATES_ORDERED.filter(s =>
-    s.name_arabic.includes(searchQuery) ||
-    s.name_french.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.number.toString().includes(searchQuery)
-  );
+  const filteredSourates = searchQuery
+    ? SOURATES_ORDERED.filter(s =>
+        s.name_arabic.includes(searchQuery) ||
+        s.name_french.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.number.toString().includes(searchQuery)
+      )
+    : SOURATES_ORDERED;
 
   const validatedCount = Array.from(sourateProgress.values()).filter(p => p.is_validated).length;
   const overallProgress = Math.round((validatedCount / 114) * 100);
@@ -363,190 +342,45 @@ const SouratesPage = () => {
           />
         </div>
 
-        {/* Sourates List */}
-        <div className="space-y-3">
-          {loading ? (
-            Array.from({ length: 10 }).map((_, i) => (
-              <Skeleton key={i} className="h-20 rounded-2xl" />
-            ))
-          ) : (
-            filteredSourates.map((sourate) => {
-              const dbId = dbSourates.get(sourate.number);
-              const p = dbId ? sourateProgress.get(dbId) : undefined;
-              const accessible = isSourateAccessible(sourate.number);
-              const isExpanded = expandedSourate === sourate.number;
-              const contents = dbId ? sourateContents.filter(c => c.sourate_id === dbId) : [];
-
-              // Count validated verses
-              let validatedVerses = 0;
-              if (dbId) {
-                for (let i = 1; i <= sourate.verses_count; i++) {
-                  if (verseProgress.get(`${dbId}-${i}`)) validatedVerses++;
-                }
-              }
-              const versePercentage = Math.round((validatedVerses / sourate.verses_count) * 100);
-
-              return (
-                <div
-                  key={sourate.number}
-                  className={cn(
-                    'module-card rounded-2xl overflow-hidden transition-all duration-300',
-                    p?.is_validated && 'border-green-500/30 bg-green-50/30 dark:bg-green-950/20',
-                    !accessible && 'opacity-60',
-                    isExpanded && 'shadow-elevated'
-                  )}
-                >
-                  {/* Header */}
-                  <button
-                    onClick={() => {
-                      if (!accessible) return;
-                      setExpandedSourate(isExpanded ? null : sourate.number);
-                    }}
-                    className="w-full p-4 flex items-center gap-4"
-                    disabled={!accessible}
-                  >
-                    {/* Number badge */}
-                    <div className={cn(
-                      'w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0',
-                      p?.is_validated
-                        ? 'bg-green-500 text-white'
-                        : !accessible
-                        ? 'bg-muted text-muted-foreground'
-                        : 'bg-gradient-to-br from-primary to-royal-dark text-primary-foreground'
-                    )}>
-                      {p?.is_validated ? <Check className="h-5 w-5" /> : !accessible ? <Lock className="h-4 w-4" /> : sourate.number}
-                    </div>
-
-                    {/* Title */}
-                    <div className="flex-1 text-left min-w-0">
-                      <p className="font-arabic text-lg text-foreground truncate">{sourate.name_arabic}</p>
-                      <p className="text-sm text-muted-foreground truncate">{sourate.name_french}</p>
-                      <p className="text-xs text-muted-foreground/70">
-                        {sourate.verses_count} versets • {sourate.revelation_type}
-                        {dbId && accessible && ` • ${validatedVerses}/${sourate.verses_count} validés`}
-                      </p>
-                    </div>
-
-                    {/* Progress badge */}
-                    {accessible && (
-                      <div className="flex items-center gap-2">
-                        {p?.is_validated ? (
-                          <Badge className="bg-green-500 text-white">✓</Badge>
-                        ) : (
-                          <span className="text-xs font-medium text-muted-foreground">{versePercentage}%</span>
-                        )}
-                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                      </div>
-                    )}
-                  </button>
-
-                  {/* Expanded content */}
-                  {isExpanded && accessible && dbId && (
-                    <div className="px-4 pb-4 space-y-4 animate-fade-in">
-                      {/* Progress bar */}
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Progression</span>
-                          <span className="font-medium text-primary">{versePercentage}%</span>
-                        </div>
-                        <Progress value={versePercentage} className="h-2" />
-                      </div>
-
-                      {/* Admin uploaded content */}
-                      {contents.length > 0 && (
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium text-foreground">Ressources</p>
-                          {contents.map(content => (
-                            <div key={content.id}>
-                              {content.content_type === 'video' && (
-                                <video controls className="w-full rounded-lg" src={content.file_url}>
-                                  Votre navigateur ne supporte pas la lecture vidéo.
-                                </video>
-                              )}
-                              {content.content_type === 'pdf' && (
-                                <a href={content.file_url} target="_blank" rel="noopener noreferrer"
-                                  className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
-                                  <FileText className="h-5 w-5 text-primary" />
-                                  <span className="text-sm">{content.file_name}</span>
-                                </a>
-                              )}
-                              {content.content_type === 'image' && (
-                                <img src={content.file_url} alt={content.file_name} className="w-full rounded-lg" />
-                              )}
-                              {content.content_type === 'document' && (
-                                <a href={content.file_url} target="_blank" rel="noopener noreferrer"
-                                  className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
-                                  {getContentIcon(content.content_type)}
-                                  <span className="text-sm">{content.file_name}</span>
-                                </a>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Verse-by-verse validation */}
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-foreground">Versets</p>
-                        <div className="grid grid-cols-1 gap-1 max-h-64 overflow-y-auto">
-                          {Array.from({ length: sourate.verses_count }, (_, i) => i + 1).map(verseNum => {
-                            const isVerseValidated = verseProgress.get(`${dbId}-${verseNum}`) || false;
-                            return (
-                              <div
-                                key={verseNum}
-                                className={cn(
-                                  'flex items-center gap-3 p-2 rounded-lg transition-colors',
-                                  isVerseValidated ? 'bg-green-50 dark:bg-green-950/30' : 'bg-muted/30'
-                                )}
-                              >
-                                <Checkbox
-                                  checked={isVerseValidated}
-                                  onCheckedChange={() => handleVerseToggle(dbId, verseNum, sourate.number, sourate.verses_count)}
-                                  className={cn(
-                                    'h-5 w-5 rounded border-2',
-                                    isVerseValidated ? 'border-green-500 bg-green-500 data-[state=checked]:bg-green-500' : 'border-gold'
-                                  )}
-                                />
-                                <span className={cn(
-                                  'text-sm',
-                                  isVerseValidated ? 'text-green-600 dark:text-green-400 line-through' : 'text-foreground'
-                                )}>
-                                  Verset {verseNum}
-                                </span>
-                                {isVerseValidated && <Check className="h-4 w-4 text-green-500 ml-auto" />}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Memorization techniques */}
-                      <div className="bg-muted/50 rounded-xl p-3 text-sm">
-                        <p className="font-medium text-foreground flex items-center gap-2 mb-1">
-                          <BookOpen className="h-4 w-4 text-gold" />
-                          Techniques de mémorisation
-                        </p>
-                        <ul className="text-muted-foreground text-xs space-y-1 ml-6">
-                          <li>• Écouter plusieurs fois</li>
-                          <li>• Répéter à voix haute</li>
-                          <li>• Réviser régulièrement</li>
-                        </ul>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
-        </div>
+        {/* Serpentine Path */}
+        {loading ? (
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-14 rounded-2xl" />
+            ))}
+          </div>
+        ) : (
+          <SouratePathView
+            sourates={filteredSourates}
+            dbSourates={dbSourates}
+            sourateProgress={sourateProgress}
+            isSourateAccessible={isSourateAccessible}
+            onSourateClick={handleSourateClick}
+          />
+        )}
       </div>
+
+      {/* Sourate Detail Modal */}
+      {selectedSourate && (
+        <SourateDetailDialog
+          open={!!selectedSourate}
+          onOpenChange={(open) => !open && setSelectedSourate(null)}
+          sourate={selectedSourate}
+          dbId={dbSourates.get(selectedSourate.number)}
+          verseProgress={verseProgress}
+          sourateProgress={dbSourates.get(selectedSourate.number) ? sourateProgress.get(dbSourates.get(selectedSourate.number)!) : undefined}
+          contents={dbSourates.get(selectedSourate.number) ? sourateContents.filter(c => c.sourate_id === dbSourates.get(selectedSourate.number)) : []}
+          onVerseToggle={handleVerseToggle}
+        />
+      )}
 
       <SourateUnlockDialog
         open={unlockDialog.open}
         onOpenChange={(open) => setUnlockDialog(prev => ({ ...prev, open }))}
         onConfirm={() => {
           setUnlockDialog(prev => ({ ...prev, open: false }));
-          setExpandedSourate(unlockDialog.sourateNumber);
+          const nextSourate = SOURATES_DATA.find(s => s.number === unlockDialog.sourateNumber);
+          if (nextSourate) setSelectedSourate(nextSourate);
         }}
         sourateName={unlockDialog.sourateName}
       />
