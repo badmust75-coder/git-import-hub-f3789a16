@@ -13,6 +13,7 @@ import Ramadan from "./pages/Ramadan";
 import Admin from "./pages/Admin";
 import Settings from "./pages/Settings";
 import Ressources from "./pages/Ressources";
+import Classement from "./pages/Classement";
 import NotFound from "./pages/NotFound";
 import PendingApproval from "./pages/PendingApproval";
 import { Loader2 } from "lucide-react";
@@ -55,6 +56,7 @@ const AppRoutes = () => {
       <Route path="/priere" element={<ProtectedRoute><Priere /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
       <Route path="/ressources" element={<ProtectedRoute><Ressources /></ProtectedRoute>} />
+      <Route path="/classement" element={<ProtectedRoute><Classement /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
