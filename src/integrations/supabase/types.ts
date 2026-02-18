@@ -881,6 +881,45 @@ export type Database = {
         }
         Relationships: []
       }
+      student_ranking: {
+        Row: {
+          alphabet_points: number
+          id: string
+          invocations_points: number
+          nourania_points: number
+          prayer_points: number
+          ramadan_points: number
+          sourates_points: number
+          total_points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alphabet_points?: number
+          id?: string
+          invocations_points?: number
+          nourania_points?: number
+          prayer_points?: number
+          ramadan_points?: number
+          sourates_points?: number
+          total_points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alphabet_points?: number
+          id?: string
+          invocations_points?: number
+          nourania_points?: number
+          prayer_points?: number
+          ramadan_points?: number
+          sourates_points?: number
+          total_points?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_alphabet_progress: {
         Row: {
           created_at: string
@@ -1223,6 +1262,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      recalculate_student_points: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {
