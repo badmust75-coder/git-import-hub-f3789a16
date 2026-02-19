@@ -59,27 +59,8 @@ const Header = ({
     <>
       <header className="sticky top-0 z-50 w-full bg-gradient-to-r from-primary via-primary to-royal-dark shadow-royal safe-top">
         <div className="flex items-center justify-between h-14 px-4">
-          {/* Left: Envelope Icon with Badge */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={handleOpenMessaging} 
-            className="text-primary-foreground hover:bg-primary-foreground/10 relative"
-          >
-            <Mail className="h-6 w-6" />
-            {unreadCount > 0 && (
-              <Badge 
-                className={`absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-orange-500 border-2 border-primary ${
-                  hasNewMessage ? 'animate-pulse' : ''
-                }`}
-                style={{
-                  animation: hasNewMessage ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : undefined
-                }}
-              >
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </Badge>
-            )}
-          </Button>
+          {/* Left: empty space for balance */}
+          <div className="w-10" />
 
           {/* Center: Title with logo */}
           <div className="flex items-center gap-2">
@@ -108,6 +89,24 @@ const Header = ({
               className="text-primary-foreground hover:bg-primary-foreground/10"
             >
               <CalendarCheck className="h-5 w-5" />
+            </Button>
+            {/* Envelope (Messaging) - just left of Home */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleOpenMessaging} 
+              className="text-primary-foreground hover:bg-primary-foreground/10 relative"
+            >
+              <Mail className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <Badge 
+                  className={`absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs bg-orange-500 border-2 border-primary ${
+                    hasNewMessage ? 'animate-pulse' : ''
+                  }`}
+                >
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </Badge>
+              )}
             </Button>
             {!isHome && (
               <Button 
