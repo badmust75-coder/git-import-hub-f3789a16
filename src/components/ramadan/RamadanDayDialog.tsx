@@ -417,56 +417,6 @@ const RamadanDayDialog = ({
                 ))}
               </div>
             </div>
-          ) : quizCompleted ? (
-            <div className="text-center py-6 space-y-3">
-              <div className="w-16 h-16 mx-auto rounded-full bg-green-500/20 flex items-center justify-center">
-                <Check className="h-8 w-8 text-green-500" />
-              </div>
-              <h4 className="font-semibold text-foreground">Quiz complété !</h4>
-              <p className="text-sm text-muted-foreground">
-                Vous avez déjà validé ce jour. Bravo !
-              </p>
-              {playlist.length > 0 && (
-                <div className="mt-4 space-y-3">
-                  <p className="text-xs text-muted-foreground">Revoir les vidéos :</p>
-                  {playlist.map((v, idx) => (
-                    <div key={v.id} className="space-y-1">
-                      {playlist.length > 1 && (
-                        <p className="text-xs text-muted-foreground text-left">Vidéo {idx + 1}</p>
-                      )}
-                      <div className="aspect-video rounded-xl overflow-hidden bg-black">
-                        <video src={v.video_url} controls className="w-full h-full" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {sortedQuizzes.length > 0 && (
-                <Button
-                  onClick={() => {
-                    setCurrentVideoIdx(0);
-                    setCurrentQuestionIdx(0);
-                    setSelectedAnswers([]);
-                    setAttemptCount(0);
-                    setAnswerResult(null);
-                    setShowExplanation(false);
-                    setCorrectCount(0);
-                    setWrongCount(0);
-                    setAnsweredCount(0);
-                    setAllFirstAttempt(true);
-                    setIsPlaying(false);
-                    if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
-                    setIsTrainingMode(true);
-                    setStep('quiz');
-                  }}
-                  variant="outline"
-                  className="mt-3"
-                >
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Refaire le quiz (entraînement)
-                </Button>
-              )}
-            </div>
           ) : step === 'video' ? (
             /* Video step — Playlist */
             <div className="space-y-4">
@@ -537,6 +487,56 @@ const RamadanDayDialog = ({
                     Passer au quiz
                   </Button>
                 </div>
+              )}
+            </div>
+          ) : quizCompleted && step !== 'quiz' ? (
+            <div className="text-center py-6 space-y-3">
+              <div className="w-16 h-16 mx-auto rounded-full bg-green-500/20 flex items-center justify-center">
+                <Check className="h-8 w-8 text-green-500" />
+              </div>
+              <h4 className="font-semibold text-foreground">Quiz complété !</h4>
+              <p className="text-sm text-muted-foreground">
+                Vous avez déjà validé ce jour. Bravo !
+              </p>
+              {playlist.length > 0 && (
+                <div className="mt-4 space-y-3">
+                  <p className="text-xs text-muted-foreground">Revoir les vidéos :</p>
+                  {playlist.map((v, idx) => (
+                    <div key={v.id} className="space-y-1">
+                      {playlist.length > 1 && (
+                        <p className="text-xs text-muted-foreground text-left">Vidéo {idx + 1}</p>
+                      )}
+                      <div className="aspect-video rounded-xl overflow-hidden bg-black">
+                        <video src={v.video_url} controls className="w-full h-full" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {sortedQuizzes.length > 0 && (
+                <Button
+                  onClick={() => {
+                    setCurrentVideoIdx(0);
+                    setCurrentQuestionIdx(0);
+                    setSelectedAnswers([]);
+                    setAttemptCount(0);
+                    setAnswerResult(null);
+                    setShowExplanation(false);
+                    setCorrectCount(0);
+                    setWrongCount(0);
+                    setAnsweredCount(0);
+                    setAllFirstAttempt(true);
+                    setIsPlaying(false);
+                    if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+                    setIsTrainingMode(true);
+                    setStep('quiz');
+                  }}
+                  variant="outline"
+                  className="mt-3"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Refaire le quiz (entraînement)
+                </Button>
               )}
             </div>
           ) : (
