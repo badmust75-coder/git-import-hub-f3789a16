@@ -116,6 +116,8 @@ const Admin = () => {
   const [cardToDelete, setCardToDelete] = useState<string | null>(null);
   const [selectedDynamicCard, setSelectedDynamicCard] = useState<any>(null);
   const [genericModuleManage, setGenericModuleManage] = useState<GenericModuleManageState | null>(null);
+  const [deleteModuleOpen, setDeleteModuleOpen] = useState(false);
+  const [moduleToDelete, setModuleToDelete] = useState<string | null>(null);
 
   // Fetch pending validation count
   const { data: pendingValidations } = useQuery({
@@ -342,6 +344,21 @@ const Admin = () => {
       toast.success('Carte supprimée');
       setDeleteCardOpen(false);
       setCardToDelete(null);
+    },
+    onError: (err: any) => toast.error('Erreur: ' + err.message),
+  });
+
+  const deleteModuleMutation = useMutation({
+    mutationFn: async (moduleId: string) => {
+      const { error } = await supabase.from('learning_modules').delete().eq('id', moduleId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-learning-modules'] });
+      queryClient.invalidateQueries({ queryKey: ['learning-modules'] });
+      toast.success('Module supprimé');
+      setDeleteModuleOpen(false);
+      setModuleToDelete(null);
     },
     onError: (err: any) => toast.error('Erreur: ' + err.message),
   });
@@ -610,6 +627,9 @@ const Admin = () => {
                         }}>
                           <Settings className="h-4 w-4 mr-2" /> Gérer les cartes
                         </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={(e) => { e.stopPropagation(); setModuleToDelete(mod.id); setDeleteModuleOpen(true); }}>
+                          <Trash2 className="h-4 w-4 mr-2" /> Supprimer le module
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   }
@@ -639,6 +659,14 @@ const Admin = () => {
           onConfirm={() => cardToDelete && deleteCardMutation.mutate(cardToDelete)}
           title="Supprimer la carte"
           description="Voulez-vous vraiment supprimer cette carte et tout son contenu ?"
+        />
+
+        <ConfirmDeleteDialog
+          open={deleteModuleOpen}
+          onOpenChange={setDeleteModuleOpen}
+          onConfirm={() => moduleToDelete && deleteModuleMutation.mutate(moduleToDelete)}
+          title="Supprimer le module"
+          description="Voulez-vous vraiment supprimer ce module pédagogique et toutes ses cartes ? Cette action est irréversible."
         />
       </div>
     </AppLayout>
