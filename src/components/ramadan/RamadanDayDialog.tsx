@@ -342,9 +342,9 @@ const RamadanDayDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto p-0 [&>button]:hidden">
+      <DialogContent className="max-w-lg w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] flex flex-col p-0 [&>button]:hidden rounded-none sm:rounded-lg">
         {/* Header with big close button */}
-        <div className="p-4 bg-gradient-to-r from-primary to-royal-dark text-primary-foreground rounded-t-lg relative">
+        <div className="p-3 sm:p-4 bg-gradient-to-r from-primary to-royal-dark text-primary-foreground sm:rounded-t-lg relative shrink-0">
           <button
             onClick={() => handleOpenChange(false)}
             className="absolute top-3 right-3 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white text-xl font-bold shadow-lg transition-all hover:scale-110"
@@ -365,11 +365,11 @@ const RamadanDayDialog = ({
           </DialogHeader>
         </div>
 
-        <div className="p-4">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4">
           {/* Failed screen (≥3 errors) */}
           {step === 'failed' ? (
-            <div className="text-center py-8 space-y-4 animate-fade-in">
-              <div className="w-20 h-20 mx-auto rounded-full bg-destructive/10 border-2 border-destructive/30 flex items-center justify-center">
+            <div className="text-center py-4 sm:py-8 space-y-3 sm:space-y-4 animate-fade-in">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full bg-destructive/10 border-2 border-destructive/30 flex items-center justify-center">
                 <RotateCcw className="h-10 w-10 text-destructive" />
               </div>
               <h3 className="text-xl font-bold text-foreground">
@@ -395,9 +395,9 @@ const RamadanDayDialog = ({
               </Button>
             </div>
           ) : step === 'perfect' ? (
-            <div className="text-center py-8 space-y-4 animate-fade-in">
+            <div className="text-center py-4 sm:py-8 space-y-3 sm:space-y-4 animate-fade-in">
               <div className="relative inline-block">
-                <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-gold to-yellow-400 flex items-center justify-center animate-scale-in">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full bg-gradient-to-br from-gold to-yellow-400 flex items-center justify-center animate-scale-in">
                   <Trophy className="h-10 w-10 text-white" />
                 </div>
                 <Star className="absolute -top-2 -right-2 h-8 w-8 text-gold fill-gold animate-scale-in" />
@@ -544,7 +544,7 @@ const RamadanDayDialog = ({
             </div>
           ) : (
             /* Quiz step — one question at a time with second chance */
-            <div ref={quizRef} className="space-y-4">
+            <div ref={quizRef} className="flex flex-col h-full space-y-2 sm:space-y-4">
               {currentQuiz && (
                 <>
                   {/* Benevolent error counter banner */}
@@ -576,7 +576,7 @@ const RamadanDayDialog = ({
                     }
 
                     return (
-                      <div className={cn('flex items-center gap-2 px-3 py-2 rounded-xl border animate-fade-in', bgClass)}>
+                      <div className={cn('flex items-center gap-2 px-2 py-1.5 sm:px-3 sm:py-2 rounded-xl border animate-fade-in', bgClass)}>
                         <span className={cn('text-xl', iconColor)}>{icon}</span>
                         <div className="flex-1">
                           <p className={cn('text-xs font-semibold', textClass)}>{msg}</p>
@@ -613,8 +613,8 @@ const RamadanDayDialog = ({
                     </div>
                   </div>
 
-                  <div className="p-3 rounded-lg border space-y-3">
-                    <h4 className="font-semibold text-foreground text-sm">
+                  <div className="p-2 sm:p-3 rounded-lg border space-y-2 sm:space-y-3">
+                    <h4 className="font-semibold text-foreground text-xs sm:text-sm">
                       {currentQuiz.question}
                     </h4>
 
@@ -633,7 +633,7 @@ const RamadanDayDialog = ({
                     {isMultipleChoice(currentQuiz) && !showExplanation && answerResult !== 'wrong-first' && (
                       <p className="text-xs text-muted-foreground italic mb-1">Plusieurs réponses possibles</p>
                     )}
-                    <div className="space-y-2">
+                    <div className="space-y-1.5 sm:space-y-2">
                       {currentQuiz.options.map((option, optIdx) => {
                         const correctOpts = getCorrectOptionsForQuiz(currentQuiz);
                         const isCorrectOption = correctOpts.includes(optIdx);
@@ -647,7 +647,7 @@ const RamadanDayDialog = ({
                             key={optIdx}
                             onClick={() => handleToggleAnswer(optIdx)}
                             className={cn(
-                              'flex items-center space-x-3 p-2.5 rounded-lg border transition-colors cursor-pointer',
+                              'flex items-center space-x-2 sm:space-x-3 p-2 sm:p-2.5 rounded-lg border transition-colors cursor-pointer',
                               showCorrect && 'border-green-500 bg-green-50 dark:bg-green-900/20',
                               (showWrong || showWrongFinal) && 'border-destructive bg-destructive/10',
                               !showExplanation && answerResult !== 'wrong-first' && 'hover:bg-muted/50',
@@ -677,7 +677,7 @@ const RamadanDayDialog = ({
 
                   {/* Explanation block */}
                   {showExplanation && (
-                    <div className="animate-fade-in space-y-3">
+                    <div className="animate-fade-in space-y-2 sm:space-y-3">
                       {/* Result message */}
                       {(answerResult === 'correct' || answerResult === 'correct-second') && (
                         <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
