@@ -322,14 +322,28 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
     },
   });
 
-  // Save quiz questions (unlimited, with explanation and order)
+  // Save quiz questions (unlimited, with explanation and order) — no duplicates
   const saveQuizzesMutation = useMutation({
     mutationFn: async ({ dayId, questionForms }: { dayId: number; questionForms: QuestionForm[] }) => {
+      // Fetch all existing questions for this day to detect duplicates
+      const { data: existingQuizzes } = await supabase
+        .from('ramadan_quizzes')
+        .select('id, question')
+        .eq('day_id', dayId);
+      const existingTexts = new Set(
+        (existingQuizzes || []).map(q => q.question.trim().toLowerCase())
+      );
+
+      let skippedCount = 0;
+
       for (let i = 0; i < questionForms.length; i++) {
         const qf = questionForms[i];
         if (!qf.question.trim()) continue;
 
+        const normalizedQuestion = qf.question.trim().toLowerCase();
+
         if (qf.existingId) {
+          // Update existing question (allowed even if text matches itself)
           const { error } = await supabase
             .from('ramadan_quizzes')
             .update({
@@ -343,6 +357,11 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
             .eq('id', qf.existingId);
           if (error) throw error;
         } else {
+          // New question: skip if duplicate
+          if (existingTexts.has(normalizedQuestion)) {
+            skippedCount++;
+            continue;
+          }
           const { error } = await supabase
             .from('ramadan_quizzes')
             .insert({
@@ -355,12 +374,20 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
               question_order: i,
             });
           if (error) throw error;
+          // Track newly added question to prevent intra-batch duplicates
+          existingTexts.add(normalizedQuestion);
         }
       }
+
+      return skippedCount;
     },
-    onSuccess: () => {
+    onSuccess: (skippedCount) => {
       queryClient.invalidateQueries({ queryKey: ['admin-ramadan-quizzes'] });
-      toast({ title: 'Quiz enregistré avec succès' });
+      if (skippedCount > 0) {
+        toast({ title: `Quiz enregistré — ${skippedCount} doublon(s) ignoré(s)` });
+      } else {
+        toast({ title: 'Quiz enregistré avec succès' });
+      }
     },
     onError: () => {
       toast({ title: 'Erreur lors de l\'enregistrement', variant: 'destructive' });
