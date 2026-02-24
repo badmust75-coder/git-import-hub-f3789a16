@@ -37,6 +37,9 @@ const LearningCard = ({
   progressPercentage = 0,
   averageProgress = 0,
   showAverageProgress = false,
+  onReplaceAudio,
+  onDeleteAudio,
+  canManageAudio = false,
 }: LearningCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
