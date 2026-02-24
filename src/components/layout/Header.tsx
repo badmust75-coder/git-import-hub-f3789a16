@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Home, LogOut, Mail, Trophy, CalendarCheck } from 'lucide-react';
+import { Home, Mail, Trophy, CalendarCheck } from 'lucide-react';
 import UserSettingsDialog from '@/components/settings/UserSettingsDialog';
 import AccountSwitcher from '@/components/auth/AccountSwitcher';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import MessagingDialog from '@/components/messaging/MessagingDialog';
 import AdminMessagingDialog from '@/components/messaging/AdminMessagingDialog';
 import NewMessageNotification from '@/components/messaging/NewMessageNotification';
@@ -24,14 +23,9 @@ const Header = ({
 }: HeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signOut, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const [showMessaging, setShowMessaging] = useState(false);
   const { unreadCount, hasNewMessage, clearNewMessageFlag } = useUnreadMessages();
-
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/auth');
-  };
 
   const handleOpenMessaging = () => {
     clearNewMessageFlag();
@@ -48,14 +42,7 @@ const Header = ({
           <div className="flex-1" />
 
           <div className="flex items-center gap-1">
-            <AccountSwitcher />
-            <Button variant="ghost" size="icon" onClick={() => navigate('/classement')} className="text-primary-foreground hover:bg-primary-foreground/10">
-              <Trophy className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => navigate('/attendance')} className="text-primary-foreground hover:bg-primary-foreground/10">
-              <CalendarCheck className="h-5 w-5" />
-            </Button>
-            {/* Envelope (Messaging) */}
+            {/* 1. Messagerie (far left of icons) */}
             <Button variant="ghost" size="icon" onClick={handleOpenMessaging} className="text-primary-foreground hover:bg-primary-foreground/10 relative">
               <Mail className="h-5 w-5" />
               {unreadCount > 0 && (
@@ -64,30 +51,26 @@ const Header = ({
                 </Badge>
               )}
             </Button>
+            {/* 2. Home */}
             {!isHome && (
               <Button variant="ghost" size="icon" onClick={() => navigate('/')} className="text-primary-foreground hover:bg-primary-foreground/10">
                 <Home className="h-5 w-5" />
               </Button>
             )}
+            {/* 3. Classement */}
+            <Button variant="ghost" size="icon" onClick={() => navigate('/classement')} className="text-primary-foreground hover:bg-primary-foreground/10">
+              <Trophy className="h-5 w-5" />
+            </Button>
+            {/* 4. Calendrier */}
+            <Button variant="ghost" size="icon" onClick={() => navigate('/attendance')} className="text-primary-foreground hover:bg-primary-foreground/10">
+              <CalendarCheck className="h-5 w-5" />
+            </Button>
+            {/* 5. Admin notifications */}
             {isAdmin && <AdminNotificationCenter />}
+            {/* 6. Account switcher */}
+            <AccountSwitcher />
+            {/* 7. Paramètres (far right, includes logout) */}
             <UserSettingsDialog />
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/10">
-                  <LogOut className="h-5 w-5" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Se déconnecter ?</AlertDialogTitle>
-                  <AlertDialogDescription>Êtes-vous sûr de vouloir quitter l'application ?</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleLogout} className="bg-destructive hover:bg-destructive/90">Quitter</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
           </div>
         </div>
       </header>
