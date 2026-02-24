@@ -94,6 +94,21 @@ const RamadanDayDialog = ({
   const audioCtxRef = useRef<AudioContext | null>(null);
   const { fireConfetti, fireSuccess } = useConfetti();
 
+  // Fetch activities for this day
+  const { data: activities = [] } = useQuery({
+    queryKey: ['ramadan-day-activities', dayId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ramadan_day_activities')
+        .select('*')
+        .eq('day_id', dayId)
+        .order('order_index');
+      if (error) throw error;
+      return data as DayActivity[];
+    },
+    enabled: open && !!dayId,
+  });
+
   // Web Audio: lazy-init AudioContext on first user interaction
   const getAudioCtx = useCallback(() => {
     if (!audioCtxRef.current) {
