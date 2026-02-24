@@ -151,6 +151,7 @@ const Ramadan = () => {
   const progressPercentage = Math.round((completedDays / 30) * 100);
   const getDayProgress = (dayId: number) => userProgress.find(p => p.day_id === dayId);
   const getVideosForDay = (dayId: number) => dayVideos.filter(v => v.day_id === dayId);
+  const getActivitiesForDay = (dayId: number) => dayActivities.filter(a => a.day_id === dayId);
   const getQuizzesForDay = (dayId: number) => quizzes.filter(q => q.day_id === dayId);
 
   const getDayUnlockTime = (dayNumber: number): Date | null => {
