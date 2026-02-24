@@ -517,6 +517,7 @@ const RamadanDayDialog = ({
                   <Star key={i} className="h-5 w-5 text-gold fill-gold" />
                 ))}
               </div>
+              {renderActivities()}
             </div>
           ) : step === 'video' ? (
             /* Video step — Playlist */
@@ -642,6 +643,7 @@ const RamadanDayDialog = ({
                   Refaire le quiz (entraînement)
                 </Button>
               )}
+              {renderActivities()}
             </div>
           ) : (
             /* Quiz step — one question at a time with second chance */
