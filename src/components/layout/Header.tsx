@@ -105,6 +105,7 @@ const Header = ({
             )}
             {/* Admin notification center - only visible for admins */}
             {isAdmin && <AdminNotificationCenter />}
+            <UserSettingsDialog />
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/10">
