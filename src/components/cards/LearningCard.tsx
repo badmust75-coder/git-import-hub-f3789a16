@@ -105,6 +105,9 @@ const LearningCard = ({
             audioUrl={audioUrl}
             titleArabic={titleArabic}
             title={titleFrench}
+            onReplace={onReplaceAudio}
+            onDelete={onDeleteAudio}
+            canManage={canManageAudio}
           />
 
           {/* Progress bars */}
