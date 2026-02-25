@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Upload, Video, HelpCircle, Trash2, Save, Loader2, Rocket, RotateCcw, Plus, GripVertical, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Upload, Video, HelpCircle, Trash2, Save, Loader2, Rocket, RotateCcw, Plus, GripVertical, AlertTriangle, FileText, Volume2, Image } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -176,7 +176,9 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
 
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<{ type: 'quiz' | 'allQuizzes' | 'video'; id?: string; dayId?: number } | null>(null);
+  const [uploadingActivity, setUploadingActivity] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'quiz' | 'allQuizzes' | 'video' | 'activity'; id?: string; dayId?: number } | null>(null);
+  const activityInputRef = useRef<HTMLInputElement>(null);
   const [themeInput, setThemeInput] = useState('');
   const [savingTheme, setSavingTheme] = useState(false);
 
@@ -243,11 +245,26 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
     },
   });
 
+  // Fetch activities
+  const { data: dayActivities = [] } = useQuery({
+    queryKey: ['admin-ramadan-activities'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ramadan_day_activities')
+        .select('*')
+        .order('order_index');
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const getQuizzesForDay = (dayId: number) => quizzes.filter(q => q.day_id === dayId).sort((a, b) => a.question_order - b.question_order);
   const getVideosForDay = (dayId: number) => dayVideos.filter(v => v.day_id === dayId);
+  const getActivitiesForDay = (dayId: number) => dayActivities.filter(a => a.day_id === dayId);
   const currentDayData = days.find(d => d.id === selectedDay);
   const currentQuizzes = selectedDay ? getQuizzesForDay(selectedDay) : [];
   const currentVideos = selectedDay ? getVideosForDay(selectedDay) : [];
+  const currentActivities = selectedDay ? getActivitiesForDay(selectedDay) : [];
 
   // Upload video mutation (multi-video)
   const uploadVideoMutation = useMutation({
@@ -423,6 +440,65 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
     },
   });
 
+  // Upload activity mutation
+  const uploadActivityMutation = useMutation({
+    mutationFn: async ({ dayId, file }: { dayId: number; file: File }) => {
+      setUploadingActivity(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `activity-${dayId}-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('ramadan-activities')
+        .upload(fileName, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('ramadan-activities')
+        .getPublicUrl(fileName);
+
+      // Determine type
+      let type = 'document';
+      if (file.type.startsWith('video/')) type = 'video';
+      else if (file.type.startsWith('audio/')) type = 'audio';
+      else if (file.type.startsWith('image/')) type = 'document';
+
+      const existingActivities = getActivitiesForDay(dayId);
+      const { error: insertError } = await supabase
+        .from('ramadan_day_activities')
+        .insert({
+          day_id: dayId,
+          type,
+          file_url: publicUrl,
+          file_name: file.name,
+          file_type: file.type,
+          order_index: existingActivities.length,
+        });
+      if (insertError) throw insertError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-ramadan-activities'] });
+      toast({ title: 'Activité ajoutée avec succès' });
+      setUploadingActivity(false);
+    },
+    onError: (error) => {
+      console.error('Upload activity error:', error);
+      toast({ title: 'Erreur lors du téléversement', variant: 'destructive' });
+      setUploadingActivity(false);
+    },
+  });
+
+  // Delete activity mutation
+  const deleteActivityMutation = useMutation({
+    mutationFn: async (activityId: string) => {
+      const { error } = await supabase.from('ramadan_day_activities').delete().eq('id', activityId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-ramadan-activities'] });
+      toast({ title: 'Activité supprimée' });
+    },
+  });
+
   // Reset calendar mutation
   const resetCalendarMutation = useMutation({
     mutationFn: async () => {
@@ -501,6 +577,14 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
     const file = e.target.files?.[0];
     if (file && selectedDay) {
       uploadVideoMutation.mutate({ dayId: selectedDay, file });
+    }
+    e.target.value = '';
+  };
+
+  const handleActivityFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && selectedDay) {
+      uploadActivityMutation.mutate({ dayId: selectedDay, file });
     }
     e.target.value = '';
   };
@@ -941,6 +1025,71 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
                 )}
               </Button>
             </div>
+            {/* Activities Section */}
+            <div className="space-y-3 border-t pt-4">
+              <Label className="flex items-center gap-2 text-base font-semibold">
+                <FileText className="h-4 w-4 text-primary" />
+                Activités du jour ({currentActivities.length})
+              </Label>
+
+              {currentActivities.length > 0 && (
+                <div className="space-y-2">
+                  {currentActivities.map((activity) => {
+                    const isVideo = activity.file_type?.startsWith('video/');
+                    const isAudio = activity.file_type?.startsWith('audio/');
+                    const isImage = activity.file_type?.startsWith('image/');
+                    return (
+                      <div key={activity.id} className="flex items-center gap-2 p-2 border rounded-lg bg-muted/30">
+                        <div className="flex-shrink-0">
+                          {isVideo ? <Video className="h-4 w-4 text-primary" /> :
+                           isAudio ? <Volume2 className="h-4 w-4 text-primary" /> :
+                           isImage ? <Image className="h-4 w-4 text-primary" /> :
+                           <FileText className="h-4 w-4 text-primary" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs truncate font-medium">{activity.file_name}</p>
+                          <p className="text-[10px] text-muted-foreground">{activity.type}</p>
+                        </div>
+                        {isImage && (
+                          <img src={activity.file_url} alt="" className="h-10 w-16 rounded object-cover flex-shrink-0" />
+                        )}
+                        {isVideo && (
+                          <video src={activity.file_url} className="h-10 w-16 rounded object-cover bg-black flex-shrink-0" />
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive flex-shrink-0"
+                          onClick={() => setDeleteTarget({ type: 'activity', id: activity.id })}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <input
+                ref={activityInputRef}
+                type="file"
+                accept="image/*,video/*,audio/*,application/pdf,.pdf"
+                onChange={handleActivityFileSelect}
+                className="hidden"
+              />
+              <Button
+                onClick={() => activityInputRef.current?.click()}
+                disabled={uploadingActivity}
+                variant="outline"
+                className="w-full"
+              >
+                {uploadingActivity ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Téléversement...</>
+                ) : (
+                  <><Upload className="h-4 w-4 mr-2" />Ajouter une activité (PDF, image, vidéo, audio)</>
+                )}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -956,12 +1105,15 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
             deleteAllQuizzesMutation.mutate(deleteTarget.dayId);
           } else if (deleteTarget?.type === 'video' && deleteTarget.id) {
             deleteVideoMutation.mutate(deleteTarget.id);
+          } else if (deleteTarget?.type === 'activity' && deleteTarget.id) {
+            deleteActivityMutation.mutate(deleteTarget.id);
           }
           setDeleteTarget(null);
         }}
         title={
           deleteTarget?.type === 'allQuizzes' ? 'Supprimer toutes les questions ?' :
           deleteTarget?.type === 'video' ? 'Supprimer cette vidéo ?' :
+          deleteTarget?.type === 'activity' ? 'Supprimer cette activité ?' :
           'Supprimer cette question ?'
         }
         description={
@@ -969,6 +1121,8 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
             ? 'Toutes les questions de ce jour seront supprimées définitivement.'
             : deleteTarget?.type === 'video'
             ? 'Cette vidéo sera supprimée définitivement.'
+            : deleteTarget?.type === 'activity'
+            ? 'Cette activité sera supprimée définitivement.'
             : 'Cette question sera supprimée définitivement.'
         }
       />
