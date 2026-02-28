@@ -203,7 +203,26 @@ const Settings = () => {
           </Card>
         )}
 
-        {/* Notifications */}
+        {/* Admin Push Test */}
+        {isAdmin && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Send className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold">Test notification push</p>
+                  <p className="text-sm text-muted-foreground">Envoie une notification à toi-même</p>
+                </div>
+                <Button size="sm" onClick={handleTestPush} disabled={testingSend}>
+                  {testingSend ? '⏳' : '🧪 Tester'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
