@@ -1,10 +1,39 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, BookMarked, Moon, Sparkles, Hand, BookOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Users, BookMarked, Moon, Sparkles, Hand, BookOpen, Bell, Send } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { useToast } from '@/hooks/use-toast';
 
 const AdminDashboard = () => {
+  const { toast } = useToast();
+  const [testingSend, setTestingSend] = useState(false);
+
+  const handleTestPush = async () => {
+    setTestingSend(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-push-notification', {
+        body: {
+          title: '🧪 Test notification',
+          body: 'Si tu vois ceci, les notifications push fonctionnent !',
+          type: 'admin',
+        },
+      });
+      if (error) throw error;
+      if (data?.sent > 0) {
+        toast({ title: `✅ Notification envoyée ! (${data.sent}/${data.total})` });
+      } else {
+        toast({ title: '⚠️ Aucun abonnement trouvé', description: `Total: ${data?.total || 0}, Expirés: ${data?.expired || 0}`, variant: 'destructive' });
+      }
+    } catch (err: any) {
+      toast({ title: '❌ Erreur', description: err?.message || String(err), variant: 'destructive' });
+    } finally {
+      setTestingSend(false);
+    }
+  };
+
   const { data: stats, isLoading } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: async () => {
@@ -138,6 +167,30 @@ const AdminDashboard = () => {
           );
         })}
       </div>
+
+      {/* Push Notifications Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            🔔 Notifications Push
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Send className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-foreground">Envoyer une notification test</p>
+              <p className="text-sm text-muted-foreground">Envoie une notification push à toi-même pour vérifier le fonctionnement</p>
+            </div>
+            <Button size="sm" onClick={handleTestPush} disabled={testingSend}>
+              {testingSend ? '⏳ Envoi...' : '🧪 Tester'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Activity Overview */}
       <Card>

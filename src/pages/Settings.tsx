@@ -203,36 +203,26 @@ const Settings = () => {
           </Card>
         )}
 
-        {/* Admin Push Test */}
-        {isAdmin && (
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Send className="h-6 w-6 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-bold">Test notification push</p>
-                  <p className="text-sm text-muted-foreground">Envoie une notification à toi-même</p>
-                </div>
-                <Button size="sm" onClick={handleTestPush} disabled={testingSend}>
-                  {testingSend ? '⏳' : '🧪 Tester'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
+        {/* Notifications Section */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              Notifications
+              🔔 Notifications Push
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Status */}
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
+              <span className="text-lg">{notificationsEnabled ? '✅' : '❌'}</span>
+              <span className="font-medium text-foreground">
+                {notificationsEnabled ? 'Notifications activées' : 'Notifications désactivées'}
+              </span>
+            </div>
+
+            {/* Toggle */}
             <div className="flex items-center justify-between">
-              <Label htmlFor="notifications">Activer les notifications</Label>
+              <Label htmlFor="notifications">Activer les notifications push</Label>
               <Switch
                 id="notifications"
                 checked={notificationsEnabled}
@@ -245,6 +235,24 @@ const Settings = () => {
                 }}
               />
             </div>
+
+            {/* Admin test button */}
+            {isAdmin && (
+              <div className="border-t pt-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Send className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-foreground">Test notification push</p>
+                    <p className="text-sm text-muted-foreground">Envoie une notification à toi-même</p>
+                  </div>
+                  <Button size="sm" onClick={handleTestPush} disabled={testingSend}>
+                    {testingSend ? '⏳ Envoi...' : '🧪 Tester'}
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {notificationsEnabled && (
               <>
