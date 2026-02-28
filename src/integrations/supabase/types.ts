@@ -1733,6 +1733,38 @@ export type Database = {
           },
         ]
       }
+      user_ramadan_video_watched: {
+        Row: {
+          day_id: number
+          id: string
+          user_id: string
+          video_id: string
+          watched_at: string
+        }
+        Insert: {
+          day_id: number
+          id?: string
+          user_id: string
+          video_id: string
+          watched_at?: string
+        }
+        Update: {
+          day_id?: number
+          id?: string
+          user_id?: string
+          video_id?: string
+          watched_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_ramadan_video_watched_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "ramadan_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string

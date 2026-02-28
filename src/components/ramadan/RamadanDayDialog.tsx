@@ -4,11 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Check, ChevronRight, SkipForward, RotateCcw, Pause, Play, Star, Trophy, FileText, Download, Printer, Volume2 } from 'lucide-react';
+import { Check, ChevronRight, SkipForward, RotateCcw, Pause, Play, Star, Trophy, FileText, Download, Printer, Volume2, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useConfetti } from '@/hooks/useConfetti';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface Quiz {
   id: string;
@@ -73,6 +75,8 @@ const RamadanDayDialog = ({
   onSubmitQuiz,
   onSaveQuizResponse,
 }: RamadanDayDialogProps) => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>('video');
   const [isTrainingMode, setIsTrainingMode] = useState(false);
   const [currentVideoIdx, setCurrentVideoIdx] = useState(0);
@@ -87,12 +91,47 @@ const RamadanDayDialog = ({
   const [allFirstAttempt, setAllFirstAttempt] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [countdownProgress, setCountdownProgress] = useState(100);
+  const [watchedVideoIds, setWatchedVideoIds] = useState<Set<string>>(new Set());
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const quizRef = useRef<HTMLDivElement>(null);
   const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const { fireConfetti, fireSuccess } = useConfetti();
+
+  // Fun messages when trying to skip to quiz
+  const FUN_MESSAGES = [
+    "Hé, pas si vite ! 🎬 Regarde d'abord les vidéos, le quiz sera bien plus facile après, promis ! 😄",
+    "Oups ! Tu essaies de tricher ? 😅 Les vidéos d'abord, le quiz ensuite, comme un vrai champion ! 🏆",
+    "Attends attends attends... 🛑 Les vidéos ne se regardent pas toutes seules ! Lance-les d'abord 🎥",
+  ];
+
+  // Fetch persisted watched videos from DB
+  const { data: persistedWatched } = useQuery({
+    queryKey: ['ramadan-video-watched', user?.id, dayId],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('user_ramadan_video_watched')
+        .select('video_id')
+        .eq('user_id', user.id)
+        .eq('day_id', dayId);
+      if (error) throw error;
+      return (data || []).map(d => d.video_id);
+    },
+    enabled: open && !!user && !!dayId,
+  });
+
+  // Sync persisted watched into local state
+  useEffect(() => {
+    if (persistedWatched && persistedWatched.length > 0) {
+      setWatchedVideoIds(prev => {
+        const next = new Set(prev);
+        persistedWatched.forEach(id => next.add(id));
+        return next;
+      });
+    }
+  }, [persistedWatched]);
 
   // Fetch activities for this day
   const { data: activities = [] } = useQuery({
@@ -292,6 +331,33 @@ const RamadanDayDialog = ({
   const totalQuestions = sortedQuizzes.length;
   const currentQuiz = sortedQuizzes[currentQuestionIdx];
 
+  // Compute if all videos are watched
+  const allVideosWatched = totalVideos === 0 || playlist.every(v => watchedVideoIds.has(v.id));
+  const watchedCount = playlist.filter(v => watchedVideoIds.has(v.id)).length;
+
+  // Mark a single video as watched (persist to DB)
+  const markVideoAsWatched = useCallback(async (videoId: string) => {
+    if (watchedVideoIds.has(videoId) || !user) return;
+    setWatchedVideoIds(prev => new Set(prev).add(videoId));
+    try {
+      await supabase.from('user_ramadan_video_watched').upsert({
+        user_id: user.id,
+        day_id: dayId,
+        video_id: videoId,
+      }, { onConflict: 'user_id,video_id' });
+      queryClient.invalidateQueries({ queryKey: ['ramadan-video-watched', user.id, dayId] });
+    } catch {}
+  }, [watchedVideoIds, user, dayId, queryClient]);
+
+  // Track video progress — mark as watched at 80%
+  const handleTimeUpdate = useCallback(() => {
+    if (!videoRef.current || !currentVideo) return;
+    const { currentTime, duration } = videoRef.current;
+    if (duration > 0 && currentTime / duration >= 0.8) {
+      markVideoAsWatched(currentVideo.id);
+    }
+  }, [currentVideo, markVideoAsWatched]);
+
   // Cleanup timer on unmount
   useEffect(() => {
     return () => {
@@ -306,10 +372,13 @@ const RamadanDayDialog = ({
   };
 
   const handleVideoEnded = () => {
+    // Mark current video as watched
+    if (currentVideo) markVideoAsWatched(currentVideo.id);
     if (!videoWatched) onMarkVideoWatched();
     if (currentVideoIdx < totalVideos - 1) {
       setCurrentVideoIdx(prev => prev + 1);
-    } else {
+    } else if (allVideosWatched || (watchedVideoIds.has(currentVideo?.id || '') && watchedCount + 1 >= totalVideos)) {
+      toast.success("Bravo, tu es prêt(e) ! 🌟 C'est parti pour le quiz !");
       goToQuiz();
     }
   };
@@ -329,6 +398,11 @@ const RamadanDayDialog = ({
   };
 
   const handleSkipToQuiz = () => {
+    if (!allVideosWatched) {
+      const msg = FUN_MESSAGES[Math.floor(Math.random() * FUN_MESSAGES.length)];
+      toast(msg, { duration: 4000 });
+      return;
+    }
     if (!videoWatched) onMarkVideoWatched();
     goToQuiz();
   };
@@ -358,6 +432,7 @@ const RamadanDayDialog = ({
 
   const handleVideoPlay = () => setIsPlaying(true);
   const handleVideoPause = () => setIsPlaying(false);
+
 
   const advanceToNextQuestion = () => {
     const newAnswered = answeredCount + 1;
@@ -615,17 +690,20 @@ const RamadanDayDialog = ({
                   {totalVideos > 1 && (
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                       <span>Vidéo {currentVideoIdx + 1} / {totalVideos}</span>
-                      <div className="flex gap-1">
-                        {playlist.map((_, idx) => (
+                      <div className="flex items-center gap-1">
+                        {playlist.map((v, idx) => (
                           <div
                             key={idx}
                             className={cn(
-                              'w-2 h-2 rounded-full transition-colors',
-                              idx < currentVideoIdx ? 'bg-green-500' :
+                              'w-2 h-2 rounded-full transition-colors relative',
+                              watchedVideoIds.has(v.id) ? 'bg-green-500' :
                               idx === currentVideoIdx ? 'bg-gold' : 'bg-muted'
                             )}
                           />
                         ))}
+                        <span className="ml-1 text-xs">
+                          {watchedCount}/{totalVideos} ✅
+                        </span>
                       </div>
                     </div>
                   )}
@@ -640,6 +718,7 @@ const RamadanDayDialog = ({
                       onEnded={handleVideoEnded}
                       onPlay={handleVideoPlay}
                       onPause={handleVideoPause}
+                      onTimeUpdate={handleTimeUpdate}
                     />
                     <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20" onClick={() => handleSeek(-10)}>
@@ -665,9 +744,20 @@ const RamadanDayDialog = ({
                           Vidéo suivante
                         </Button>
                       )}
-                      <Button onClick={handleSkipToQuiz} variant="outline" className="flex-1">
-                        <ChevronRight className="h-4 w-4 mr-2" />
-                        Passer au quiz
+                      <Button
+                        onClick={handleSkipToQuiz}
+                        variant="outline"
+                        className={cn(
+                          'flex-1 transition-all',
+                          allVideosWatched
+                            ? 'bg-gold/10 border-gold text-gold hover:bg-gold/20'
+                            : 'opacity-50 cursor-not-allowed'
+                        )}
+                      >
+                        {allVideosWatched
+                          ? <><Star className="h-4 w-4 mr-2 fill-current" />Passer au quiz 🌟</>
+                          : <><Lock className="h-4 w-4 mr-2" />Passer au quiz</>
+                        }
                       </Button>
                     </div>
                     {activities.length > 0 && (
