@@ -25,6 +25,8 @@ const Index = () => {
   const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
+  const [showNotifBanner, setShowNotifBanner] = useState(false);
+  const [activatingNotif, setActivatingNotif] = useState(false);
   const { data: progress } = useUserProgress();
 
   // Fetch modules from DB — admins see all, users see active only
@@ -77,6 +79,36 @@ const Index = () => {
       }
     }
   }, [profile, profileLoading, user]);
+
+  // Check notification permission and show banner if "default"
+  useEffect(() => {
+    if (user && 'Notification' in window && Notification.permission === 'default') {
+      setShowNotifBanner(true);
+    }
+  }, [user]);
+
+  const handleActivateNotifications = async () => {
+    if (!user) return;
+    setActivatingNotif(true);
+    try {
+      await registerServiceWorker();
+      const perm = await requestNotificationPermission();
+      if (perm === 'granted') {
+        const result = await subscribeToPush(user.id);
+        if (result.success) {
+          toast.success('Notifications activées !');
+        } else {
+          toast.error('Erreur : ' + result.detail);
+        }
+      } else {
+        toast.info('Permission refusée');
+      }
+      setShowNotifBanner(false);
+    } catch (e: any) {
+      toast.error('Erreur : ' + e.message);
+    }
+    setActivatingNotif(false);
+  };
 
   const handleWelcomeComplete = () => {
     setShowWelcomeDialog(false);
