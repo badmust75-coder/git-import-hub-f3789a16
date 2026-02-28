@@ -77,16 +77,25 @@ const AdminMessagingDialog = ({ open, onOpenChange, onMessagesRead }: AdminMessa
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('user_id, full_name, email')
+        .select('user_id, full_name, email, avatar_url')
         .eq('is_approved', true)
         .order('full_name');
       if (error) return [];
-      // Exclude admins
       const { data: adminRoles } = await supabase.from('user_roles').select('user_id').eq('role', 'admin');
       const adminIds = new Set((adminRoles || []).map(r => r.user_id));
       return (data || []).filter(p => !adminIds.has(p.user_id));
     },
     enabled: newMsgOpen || groupMsgOpen,
+  });
+
+  // Fetch top 3 ranking for group mode
+  const { data: top3UserIds = [] } = useQuery({
+    queryKey: ['admin-top3-ranking'],
+    queryFn: async () => {
+      const { data } = await supabase.from('student_ranking').select('user_id').order('total_points', { ascending: false }).limit(3);
+      return (data || []).map(r => r.user_id);
+    },
+    enabled: groupMsgOpen && groupMsgMode === 'top3',
   });
 
   // Fetch conversations
