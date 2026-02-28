@@ -1,5 +1,5 @@
 // Service Worker for Push Notifications and Auto-Update
-const CACHE_NAME = 'dini-bismillah-v2';
+const CACHE_NAME = 'dini-bismillah-v3';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -16,7 +16,6 @@ self.addEventListener('install', (event) => {
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
-  // Immediately activate the new service worker
   self.skipWaiting();
 });
 
@@ -30,7 +29,6 @@ self.addEventListener('activate', (event) => {
           .map((name) => caches.delete(name))
       );
     }).then(() => {
-      // Take control of all clients immediately
       return clients.claim();
     })
   );
@@ -45,16 +43,12 @@ self.addEventListener('message', (event) => {
 
 // Fetch event - network first, then cache fallback
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
   if (event.request.method !== 'GET') return;
-  
-  // Skip chrome-extension and other non-http requests
   if (!event.request.url.startsWith('http')) return;
 
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Clone the response before caching
         const responseClone = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, responseClone);
@@ -62,34 +56,40 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch(() => {
-        // If network fails, try cache
         return caches.match(event.request);
       })
   );
 });
 
-// Push notification handler
+// Push notification handler - iOS Safari compatible
 self.addEventListener('push', (event) => {
-  const data = event.data?.json() || {};
-  
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (e) {
+    // If JSON parsing fails, try text
+    try {
+      data = { body: event.data ? event.data.text() : 'Nouvelle notification' };
+    } catch (_) {
+      data = { body: 'Nouvelle notification' };
+    }
+  }
+
+  const title = data.title || 'Dini Bismillah';
   const options = {
     body: data.body || 'Nouvelle notification',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
-    vibrate: [100, 50, 100],
+    icon: data.icon || '/icon-192.png',
+    badge: data.badge || '/icon-192.png',
+    tag: data.tag || 'dini-bismillah',
+    renotify: data.renotify !== undefined ? data.renotify : true,
+    vibrate: [200, 100, 200],
     data: {
       url: data.url || '/',
     },
-    actions: [
-      {
-        action: 'open',
-        title: 'Ouvrir',
-      },
-    ],
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Dini Bismillah', options)
+    self.registration.showNotification(title, options)
   );
 });
 
@@ -101,14 +101,12 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // Check if there is already a window/tab open with the target URL
       for (let i = 0; i < windowClients.length; i++) {
         const client = windowClients[i];
         if (client.url.includes(urlToOpen) && 'focus' in client) {
           return client.focus();
         }
       }
-      // If not, open a new window/tab
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen);
       }
