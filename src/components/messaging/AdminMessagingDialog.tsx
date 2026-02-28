@@ -253,13 +253,22 @@ const AdminMessagingDialog = ({ open, onOpenChange, onMessagesRead }: AdminMessa
     }
   };
 
-  // Group message: send to all students
+  // Group message: compute target profiles based on mode
+  const getGroupTargets = () => {
+    if (groupMsgMode === 'all') return allProfiles;
+    if (groupMsgMode === 'top3') return allProfiles.filter(p => top3UserIds.includes(p.user_id));
+    if (groupMsgMode === 'select') return allProfiles.filter(p => groupMsgSelected.has(p.user_id));
+    return [];
+  };
+
+  const groupTargetCount = getGroupTargets().length;
+
   const handleSendGroupMessage = async () => {
-    if (!groupMsgText.trim() || allProfiles.length === 0) return;
+    const targets = getGroupTargets();
+    if (!groupMsgText.trim() || targets.length === 0) return;
     setGroupMsgSending(true);
     try {
-      // Insert a message for each student
-      const inserts = allProfiles.map(p => ({
+      const inserts = targets.map(p => ({
         user_id: p.user_id,
         message: groupMsgText.trim(),
         sender_type: 'admin' as const,
@@ -269,29 +278,32 @@ const AdminMessagingDialog = ({ open, onOpenChange, onMessagesRead }: AdminMessa
       const { error } = await supabase.from('user_messages').insert(inserts);
       if (error) throw error;
 
-      const studentCount = allProfiles.length;
-
-      // Send push notification if checked
       if (groupMsgPush) {
         try {
-          await supabase.functions.invoke('send-push-notification', {
-            body: {
-              title: '📢 Nouveau message du professeur',
-              body: groupMsgText.trim().substring(0, 200),
-              type: 'all',
-            },
-          });
-        } catch (e) {
-          console.error('Push notification error:', e);
-        }
+          if (groupMsgMode === 'all') {
+            await supabase.functions.invoke('send-push-notification', {
+              body: { title: '📢 Nouveau message du professeur', body: groupMsgText.trim().substring(0, 200), type: 'all' },
+            });
+          } else {
+            // Send to specific user IDs
+            for (const t of targets) {
+              await supabase.functions.invoke('send-push-notification', {
+                body: { title: '📢 Nouveau message du professeur', body: groupMsgText.trim().substring(0, 200), type: 'user', userId: t.user_id },
+              });
+            }
+          }
+        } catch (e) { console.error('Push notification error:', e); }
       }
 
       setGroupMsgOpen(false);
       setGroupMsgText('');
       setGroupMsgPush(true);
+      setGroupMsgMode('all');
+      setGroupMsgSelected(new Set());
+      setGroupMsgSearch('');
       refetch();
 
-      toast({ title: `✅ Message envoyé à ${studentCount} élèves !` });
+      toast({ title: `✅ Message envoyé à ${targets.length} élève${targets.length > 1 ? 's' : ''} !` });
     } catch {
       toast({ title: 'Erreur', description: "Impossible d'envoyer le message groupé", variant: 'destructive' });
     } finally {
@@ -299,15 +311,9 @@ const AdminMessagingDialog = ({ open, onOpenChange, onMessagesRead }: AdminMessa
     }
   };
 
-  const filtered = conversations.filter(c => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return c.profile.full_name?.toLowerCase().includes(q) || c.profile.email?.toLowerCase().includes(q);
-  });
-
-  const filteredNewMsgProfiles = allProfiles.filter(p => {
-    if (!newMsgSearch) return true;
-    const q = newMsgSearch.toLowerCase();
+  const filteredGroupProfiles = allProfiles.filter(p => {
+    if (!groupMsgSearch) return true;
+    const q = groupMsgSearch.toLowerCase();
     return p.full_name?.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q);
   });
 
