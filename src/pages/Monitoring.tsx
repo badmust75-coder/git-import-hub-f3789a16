@@ -478,11 +478,11 @@ const Monitoring = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Debug Push Card */}
-            <div className="border-2 border-dashed border-orange-300 dark:border-orange-700 rounded-lg p-3 bg-orange-50/50 dark:bg-orange-950/20 space-y-2">
+            <div className="border-2 border-dashed border-orange-300 dark:border-orange-700 rounded-lg p-3 bg-orange-50/50 dark:bg-orange-950/20 space-y-3">
               <p className="text-sm font-bold flex items-center gap-1">🔍 Debug Push</p>
               <div className="grid grid-cols-1 gap-1 text-xs font-mono">
                 <div className="flex justify-between"><span className="text-muted-foreground">VAPID Key :</span><span className="truncate ml-2">{debugPush.vapidKey}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Mes abonnements :</span><span>{debugPush.mySubCount}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Mes abonnements DB :</span><span>{debugPush.mySubCount}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">get-vapid-key :</span><span>{debugPush.vapidResult}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Permission :</span>
                   <span className={debugPush.notifPermission === 'granted' ? 'text-emerald-600' : debugPush.notifPermission === 'denied' ? 'text-red-600' : 'text-orange-600'}>
@@ -490,7 +490,30 @@ const Monitoring = () => {
                   </span>
                 </div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Service Worker :</span><span>{debugPush.swStatus}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">pushManager.getSub :</span><span className="truncate ml-2">{debugExistingSub}</span></div>
               </div>
+
+              {/* Re-subscribe button */}
+              <Button onClick={handleResubscribe} disabled={resubbing} size="sm" variant="outline" className="w-full">
+                {resubbing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : '🔄'} Me ré-abonner aux notifications
+              </Button>
+              {resubResult && (
+                <p className={`text-xs font-mono p-2 rounded border ${resubResult.startsWith('✅') ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-300' : 'bg-red-50 dark:bg-red-950/20 border-red-300'}`}>
+                  {resubResult}
+                </p>
+              )}
+
+              {/* Chain test button */}
+              <Button onClick={handleChainTest} disabled={chainTesting} size="sm" variant="outline" className="w-full">
+                {chainTesting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : '🔍'} Tester souscription maintenant
+              </Button>
+              {chainTestResult.length > 0 && (
+                <div className="bg-background border rounded p-2 space-y-0.5 max-h-48 overflow-y-auto">
+                  {chainTestResult.map((line, i) => (
+                    <p key={i} className="text-[10px] font-mono">{line}</p>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-between">
