@@ -399,22 +399,32 @@ const HomeworkCard = () => {
             );
           })}
 
-          {/* Completed assignments (collapsed view) */}
-          {completedAssignments.length > 0 && (
-            <div className="pt-1 border-t border-border">
-              <p className="text-xs text-muted-foreground mb-1">✅ Terminés ({completedAssignments.length})</p>
-              {completedAssignments.map(assignment => {
-                const subjectInfo = SUBJECTS[assignment.subject] || SUBJECTS.nourania;
-                return (
-                  <div key={assignment.id} className="flex items-center gap-2 py-1 opacity-60">
-                    <CheckCircle2 className="h-3 w-3 text-green-500" />
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">{subjectInfo.label}</Badge>
-                    <span className="text-xs text-muted-foreground line-through">{assignment.title}</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {/* Completed assignments - only latest per subject */}
+          {completedAssignments.length > 0 && (() => {
+            // Group by subject, keep only the most recent per subject
+            const latestBySubject = new Map<string, typeof completedAssignments[0]>();
+            for (const a of completedAssignments) {
+              if (!latestBySubject.has(a.subject)) {
+                latestBySubject.set(a.subject, a); // already sorted by created_at desc
+              }
+            }
+            const latestList = Array.from(latestBySubject.values());
+            return (
+              <div className="pt-1 border-t border-border">
+                <p className="text-xs text-muted-foreground mb-1">✅ Terminés ({completedAssignments.length})</p>
+                {latestList.map(assignment => {
+                  const subjectInfo = SUBJECTS[assignment.subject] || SUBJECTS.nourania;
+                  return (
+                    <div key={assignment.id} className="flex items-center gap-2 py-1 opacity-60">
+                      <CheckCircle2 className="h-3 w-3 text-green-500" />
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">{subjectInfo.label}</Badge>
+                      <span className="text-xs text-muted-foreground line-through">{assignment.title}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       </div>
 
