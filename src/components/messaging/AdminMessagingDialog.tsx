@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { Mail, MailOpen, Send, User, ArrowLeft, Search, Music, Plus } from 'lucide-react';
+import { Mail, MailOpen, Send, User, ArrowLeft, Search, Music, Plus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
@@ -61,7 +62,13 @@ const AdminMessagingDialog = ({ open, onOpenChange, onMessagesRead }: AdminMessa
   const [newMsgText, setNewMsgText] = useState('');
   const [newMsgSending, setNewMsgSending] = useState(false);
 
-  // Fetch all profiles for new message dialog
+  // Group message dialog state
+  const [groupMsgOpen, setGroupMsgOpen] = useState(false);
+  const [groupMsgText, setGroupMsgText] = useState('');
+  const [groupMsgPush, setGroupMsgPush] = useState(true);
+  const [groupMsgSending, setGroupMsgSending] = useState(false);
+
+  // Fetch all profiles for new message / group message dialog
   const { data: allProfiles = [] } = useQuery({
     queryKey: ['admin-all-profiles-messaging'],
     queryFn: async () => {
@@ -76,7 +83,7 @@ const AdminMessagingDialog = ({ open, onOpenChange, onMessagesRead }: AdminMessa
       const adminIds = new Set((adminRoles || []).map(r => r.user_id));
       return (data || []).filter(p => !adminIds.has(p.user_id));
     },
-    enabled: newMsgOpen,
+    enabled: newMsgOpen || groupMsgOpen,
   });
 
   // Fetch conversations
@@ -234,6 +241,52 @@ const AdminMessagingDialog = ({ open, onOpenChange, onMessagesRead }: AdminMessa
     }
   };
 
+  // Group message: send to all students
+  const handleSendGroupMessage = async () => {
+    if (!groupMsgText.trim() || allProfiles.length === 0) return;
+    setGroupMsgSending(true);
+    try {
+      // Insert a message for each student
+      const inserts = allProfiles.map(p => ({
+        user_id: p.user_id,
+        message: groupMsgText.trim(),
+        sender_type: 'admin' as const,
+        message_type: 'text' as const,
+      }));
+
+      const { error } = await supabase.from('user_messages').insert(inserts);
+      if (error) throw error;
+
+      const studentCount = allProfiles.length;
+
+      // Send push notification if checked
+      if (groupMsgPush) {
+        try {
+          await supabase.functions.invoke('send-push-notification', {
+            body: {
+              title: '📢 Nouveau message du professeur',
+              body: groupMsgText.trim().substring(0, 200),
+              type: 'all',
+            },
+          });
+        } catch (e) {
+          console.error('Push notification error:', e);
+        }
+      }
+
+      setGroupMsgOpen(false);
+      setGroupMsgText('');
+      setGroupMsgPush(true);
+      refetch();
+
+      toast({ title: `✅ Message envoyé à ${studentCount} élèves !` });
+    } catch {
+      toast({ title: 'Erreur', description: "Impossible d'envoyer le message groupé", variant: 'destructive' });
+    } finally {
+      setGroupMsgSending(false);
+    }
+  };
+
   const filtered = conversations.filter(c => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
@@ -263,9 +316,12 @@ const AdminMessagingDialog = ({ open, onOpenChange, onMessagesRead }: AdminMessa
               ) : (
                 <>
                   <Mail className="h-5 w-5" /> Messagerie Admin
-                  <div className="ml-auto">
+                  <div className="ml-auto flex gap-1">
                     <Button size="sm" variant="outline" onClick={() => setNewMsgOpen(true)}>
                       <Plus className="h-4 w-4 mr-1" /> Nouveau
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setGroupMsgOpen(true)}>
+                      <Users className="h-4 w-4 mr-1" /> Groupe
                     </Button>
                   </div>
                 </>
@@ -430,6 +486,42 @@ const AdminMessagingDialog = ({ open, onOpenChange, onMessagesRead }: AdminMessa
               className="w-full"
             >
               <Send className="h-4 w-4 mr-2" /> Envoyer
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Group Message Dialog */}
+      <Dialog open={groupMsgOpen} onOpenChange={setGroupMsgOpen}>
+        <DialogContent className="max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>👥 Message à tous les élèves</DialogTitle>
+            <DialogDescription>Ce message sera envoyé à {allProfiles.length} élève{allProfiles.length > 1 ? 's' : ''}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              value={groupMsgText}
+              onChange={(e) => setGroupMsgText(e.target.value)}
+              placeholder="Votre message..."
+              rows={4}
+              className="resize-none"
+            />
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="push-notif"
+                checked={groupMsgPush}
+                onCheckedChange={(v) => setGroupMsgPush(v === true)}
+              />
+              <label htmlFor="push-notif" className="text-sm cursor-pointer">
+                Envoyer aussi une notification push sur les téléphones
+              </label>
+            </div>
+            <Button
+              onClick={handleSendGroupMessage}
+              disabled={!groupMsgText.trim() || groupMsgSending}
+              className="w-full"
+            >
+              {groupMsgSending ? 'Envoi en cours...' : 'Envoyer à tous 📢'}
             </Button>
           </div>
         </DialogContent>
