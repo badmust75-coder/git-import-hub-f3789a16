@@ -99,6 +99,15 @@ const AdminNouraniaValidations = ({ onBack }: AdminNouraniaValidationsProps) => 
         title: '✅ Leçon validée, niveau suivant débloqué !',
         description: `Leçon ${request.lesson?.lesson_number || ''} validée pour ${request.profile?.full_name || 'l\'élève'}`,
       });
+      
+      // Notify student
+      sendPushNotification({
+        title: '⭐ Félicitations !',
+        body: `Ton professeur a validé ${request.lesson?.title_french || 'ta leçon'} ! Continue comme ça !`,
+        type: 'user',
+        userId: request.user_id,
+      });
+      
       queryClient.invalidateQueries({ queryKey: ['admin-nourania-validations'] });
       queryClient.invalidateQueries({ queryKey: ['admin-pending-nourania-count'] });
     },
