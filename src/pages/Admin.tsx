@@ -32,18 +32,12 @@ import ConfirmDeleteDialog from '@/components/ui/confirm-delete-dialog';
 import { 
   Users, GraduationCap, Moon, Sparkles, BookOpen, MessageSquare, 
   BookMarked, Hand, Settings, Mail, ClipboardCheck, UserCheck,
-  Plus, GripVertical, MoreVertical, Pencil, Trash2,
+  Plus, GripVertical, Trash2,
   FileText, List, Video, Star, Heart, Bell, Calendar, Image, Music,
   ClipboardList, LayoutGrid, Book, Scroll
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   DndContext,
   closestCenter,
@@ -80,7 +74,7 @@ interface CardItem {
   dynamicCard?: any;
 }
 
-// Sortable wrapper component
+// Sortable wrapper component for grid layout
 const SortableCard = ({ id, children }: { id: string; children: React.ReactNode }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = {
@@ -90,16 +84,16 @@ const SortableCard = ({ id, children }: { id: string; children: React.ReactNode 
     position: 'relative' as const,
   };
   return (
-    <div ref={setNodeRef} style={style} className="flex items-stretch gap-1">
+    <div ref={setNodeRef} style={style} className="relative">
       <button
         {...attributes}
         {...listeners}
-        className="flex items-center px-1 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none"
+        className="absolute -top-1 -left-1 z-10 flex items-center justify-center w-5 h-5 rounded-full bg-muted/80 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none"
         aria-label="Déplacer"
       >
-        <GripVertical className="h-5 w-5" />
+        <GripVertical className="h-3 w-3" />
       </button>
-      <div className="flex-1 min-w-0">{children}</div>
+      {children}
     </div>
   );
 };
@@ -513,12 +507,12 @@ const Admin = () => {
         </div>
 
         <h2 className="text-xl font-bold text-foreground mb-2">Modules natifs</h2>
-        <p className="text-sm text-muted-foreground mb-4">Cliquer pour voir la progression • Menu ⋮ pour gérer le contenu</p>
+        <p className="text-sm text-muted-foreground mb-4">Cliquer sur une carte pour y accéder</p>
 
-        {/* Sortable cards area */}
+        {/* Sortable cards area - 3 col grid (2 col on small screens) */}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={orderedCards.map(c => c.id)} strategy={verticalListSortingStrategy}>
-            <div className="space-y-3">
+            <div className="grid grid-cols-2 min-[400px]:grid-cols-3 gap-3">
               {orderedCards.map((item) => {
                 if (item.type === 'static') {
                   const card = STATIC_CARDS.find(c => c.key === item.key);
@@ -534,75 +528,30 @@ const Admin = () => {
                         bgColor={card.bgColor}
                         cardBgColor={card.cardBgColor}
                         onClick={() => setCurrentView(card.view)}
-                        actionButton={
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm"><MoreVertical className="h-4 w-4" /></Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setCurrentView(card.view)}>
-                                <BookOpen className="h-4 w-4 mr-2" /> Voir la progression
-                              </DropdownMenuItem>
-                              {card.manageView && (
-                                <DropdownMenuItem onClick={() => setCurrentView(card.manageView!)}>
-                                  <Settings className="h-4 w-4 mr-2" /> Gérer le contenu
-                                </DropdownMenuItem>
-                              )}
-                              {card.key === 'ramadan' && (
-                                <DropdownMenuItem onClick={() => setCurrentView('ramadan-quiz-tracking')}>
-                                  <ClipboardCheck className="h-4 w-4 mr-2" /> Suivi des quiz
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        }
                       />
                     </SortableCard>
                   );
                 }
 
-                // Dynamic dashboard announcement card (not learning modules)
+                // Dynamic dashboard announcement card
                 const dynCard = item.dynamicCard;
                 if (!dynCard) return null;
                 const DynIcon = ICON_MAP[dynCard.icon] || FileText;
                 return (
                   <SortableCard key={item.id} id={item.id}>
-                    <div className="relative">
-                      <AdminModuleCard
-                        title={dynCard.title}
-                        icon={DynIcon}
-                        value={dynCard.content_type === 'text' ? 'Texte' : dynCard.content_type === 'list' ? 'Liste' : dynCard.content_type === 'video' ? 'Vidéo' : 'Document'}
-                        subtitle={dynCard.is_public ? 'Public' : 'Restreint'}
-                        color="text-foreground"
-                        bgColor={dynCard.bg_color}
-                        cardBgColor={`${dynCard.bg_color.replace('dark:bg-', 'dark:border-').replace('/30', '/50')} border`}
-                        onClick={() => {
-                          setSelectedDynamicCard(dynCard);
-                          setCurrentView('dynamic-card-content');
-                        }}
-                        actionButton={
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm"><MoreVertical className="h-4 w-4" /></Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => { setEditingCard(dynCard); setCardDialogOpen(true); }}>
-                                <Pencil className="h-4 w-4 mr-2" /> Modifier
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => {
-                                setSelectedDynamicCard(dynCard);
-                                setCurrentView('dynamic-card-content');
-                              }}>
-                                <FileText className="h-4 w-4 mr-2" /> Gérer les fichiers
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive" onClick={() => { setCardToDelete(dynCard.id); setDeleteCardOpen(true); }}>
-                                <Trash2 className="h-4 w-4 mr-2" /> Supprimer
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        }
-                      />
-                    </div>
+                    <AdminModuleCard
+                      title={dynCard.title}
+                      icon={DynIcon}
+                      value={dynCard.content_type === 'text' ? 'Texte' : dynCard.content_type === 'list' ? 'Liste' : dynCard.content_type === 'video' ? 'Vidéo' : 'Document'}
+                      subtitle={dynCard.is_public ? 'Public' : 'Restreint'}
+                      color="text-foreground"
+                      bgColor={dynCard.bg_color}
+                      cardBgColor={`${dynCard.bg_color.replace('dark:bg-', 'dark:border-').replace('/30', '/50')} border`}
+                      onClick={() => {
+                        setSelectedDynamicCard(dynCard);
+                        setCurrentView('dynamic-card-content');
+                      }}
+                    />
                   </SortableCard>
                 );
               })}
