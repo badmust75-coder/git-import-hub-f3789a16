@@ -11,7 +11,7 @@ import { useUserProgress } from '@/hooks/useUserProgress';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { requestNotificationPermission, registerServiceWorker, subscribeToPush } from '@/lib/notifications';
+import { requestOneSignalPermission, isOneSignalReady } from '@/lib/notifications';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -29,7 +29,7 @@ const Index = () => {
   const [activatingNotif, setActivatingNotif] = useState(false);
   const { data: progress } = useUserProgress();
 
-  // Fetch modules from DB — admins see all, users see active only
+  // Fetch modules from DB
   const { data: modules } = useQuery({
     queryKey: ['learning-modules', isAdmin],
     queryFn: async () => {
@@ -91,15 +91,9 @@ const Index = () => {
     if (!user) return;
     setActivatingNotif(true);
     try {
-      await registerServiceWorker();
-      const perm = await requestNotificationPermission();
-      if (perm === 'granted') {
-        const result = await subscribeToPush(user.id);
-        if (result.success) {
-          toast.success('Notifications activées !');
-        } else {
-          toast.error('Erreur : ' + result.detail);
-        }
+      const granted = await requestOneSignalPermission();
+      if (granted) {
+        toast.success('Notifications activées !');
       } else {
         toast.info('Permission refusée');
       }

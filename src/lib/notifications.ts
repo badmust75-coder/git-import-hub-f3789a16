@@ -1,203 +1,72 @@
 import { supabase } from '@/integrations/supabase/client';
 
-export async function registerServiceWorker() {
-  if ('serviceWorker' in navigator && 'PushManager' in window) {
-    try {
-      const registration = await navigator.serviceWorker.register('/sw.js');
-      console.log('Service Worker registered:', registration);
-      return registration;
-    } catch (error) {
-      console.error('Service Worker registration failed:', error);
-      return null;
-    }
-  }
-  return null;
+// OneSignal helper: get the OneSignal SDK instance
+function getOneSignal(): any {
+  return (window as any).OneSignal;
 }
 
-export async function requestNotificationPermission(): Promise<NotificationPermission> {
-  if (!('Notification' in window)) {
-    console.log('This browser does not support notifications');
-    return 'denied';
-  }
-
-  if (Notification.permission === 'granted') {
-    return 'granted';
-  }
-
-  if (Notification.permission !== 'denied') {
-    return await Notification.requestPermission();
-  }
-
-  return Notification.permission;
+/** Check if OneSignal is loaded and initialized */
+export function isOneSignalReady(): boolean {
+  const os = getOneSignal();
+  return !!os;
 }
 
-// Fetch VAPID public key from edge function (cached)
-let _vapidKeyCache: string | null = null;
-
-async function getVapidPublicKey(): Promise<string> {
-  if (_vapidKeyCache) return _vapidKeyCache;
-
+/** Login user to OneSignal (set external_id) */
+export async function oneSignalLogin(userId: string) {
+  const os = getOneSignal();
+  if (!os) {
+    console.warn('[OneSignal] SDK not loaded');
+    return;
+  }
   try {
-    const { data, error } = await supabase.functions.invoke('get-vapid-key');
-    if (error) throw error;
-    _vapidKeyCache = data?.vapidPublicKey || '';
-    return _vapidKeyCache;
-  } catch (e) {
-    console.error('Failed to fetch VAPID key:', e);
-    return '';
-  }
-}
-
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-
-  const rawData = atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
-
-async function logToAppLogs(level: string, message: string, context?: any) {
-  try {
-    await supabase.from('app_logs').insert({
-      level,
-      message,
-      context: context ? JSON.stringify(context) : '{}',
-    } as any);
-  } catch (e) {
-    console.error('Failed to log to app_logs:', e);
-  }
-}
-
-export async function subscribeToPush(userId: string): Promise<{ success: boolean; detail: string; endpoint?: string }> {
-  try {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      const msg = 'Push not supported in this browser';
-      await logToAppLogs('warn', msg, { userId });
-      return { success: false, detail: msg };
-    }
-
-    const registration = await navigator.serviceWorker.ready;
-    
-    let subscription = await (registration as any).pushManager.getSubscription();
-    
-    if (subscription) {
-      console.log('[Push] Existing subscription found:', subscription.endpoint.substring(0, 40));
-      // Check if it's already saved in DB
-      const { count } = await supabase
-        .from('push_subscriptions')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('endpoint', subscription.endpoint);
-      
-      if ((count || 0) > 0) {
-        const msg = 'Subscription already exists in DB';
-        console.log('[Push]', msg);
-        return { success: true, detail: msg, endpoint: subscription.endpoint };
-      }
-      // Subscription exists in pushManager but not in DB → save it
-      console.log('[Push] Subscription not in DB, saving...');
-    } else {
-      // No subscription → create one
-      const vapidKey = await getVapidPublicKey();
-      if (!vapidKey) {
-        const msg = 'VAPID key is empty, cannot subscribe';
-        await logToAppLogs('error', msg, { userId });
-        return { success: false, detail: msg };
-      }
-      
-      const subscribeOptions: PushSubscriptionOptionsInit = {
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey) as any,
-      };
-      
-      subscription = await (registration as any).pushManager.subscribe(subscribeOptions);
-      console.log('[Push] New subscription created:', subscription.endpoint.substring(0, 40));
-    }
-
-    if (subscription) {
-      const subscriptionJson = subscription.toJSON();
-      const endpoint = subscription.endpoint;
-      const p256dh = subscriptionJson.keys?.p256dh || '';
-      const auth = subscriptionJson.keys?.auth || '';
-      
-      console.log('[Push] Saving to DB:', { endpoint: endpoint.substring(0, 40), p256dh: p256dh.substring(0, 10), auth: auth.substring(0, 10) });
-      
-      const { error } = await supabase
-        .from('push_subscriptions')
-        .upsert({
-          user_id: userId,
-          endpoint,
-          p256dh,
-          auth,
-        }, {
-          onConflict: 'user_id,endpoint',
-        });
-
-      if (error) {
-        const msg = `Error saving subscription: ${error.message}`;
-        console.error('[Push]', msg);
-        await logToAppLogs('error', msg, { userId, error: error.message });
-        return { success: false, detail: msg };
-      }
-
-      const msg = `Subscription saved successfully`;
-      console.log('[Push]', msg);
-      await logToAppLogs('info', `Push subscription saved for user`, { userId, endpoint: endpoint.substring(0, 40) });
-      return { success: true, detail: msg, endpoint };
-    }
-
-    return { success: false, detail: 'No subscription created' };
-  } catch (error: any) {
-    const msg = `Push subscription error: ${error.message}`;
-    console.error('[Push]', msg);
-    await logToAppLogs('error', msg, { userId, error: error.message });
-    return { success: false, detail: msg };
-  }
-}
-
-/** Auto-subscribe on login if permission is granted */
-export async function autoSubscribeOnLogin(userId: string) {
-  if (!('Notification' in window)) return;
-  if (Notification.permission !== 'granted') return;
-  
-  try {
-    await registerServiceWorker();
-    const result = await subscribeToPush(userId);
-    console.log('[Push] Auto-subscribe on login:', result.detail);
+    await os.login(userId);
+    console.log('[OneSignal] User logged in:', userId);
   } catch (e: any) {
-    console.error('[Push] Auto-subscribe failed:', e.message);
+    console.error('[OneSignal] Login error:', e.message);
   }
 }
 
-export async function unsubscribeFromPush(userId: string): Promise<boolean> {
+/** Logout user from OneSignal */
+export async function oneSignalLogout() {
+  const os = getOneSignal();
+  if (!os) return;
   try {
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await (registration as any).pushManager.getSubscription();
+    await os.logout();
+    console.log('[OneSignal] User logged out');
+  } catch (e: any) {
+    console.error('[OneSignal] Logout error:', e.message);
+  }
+}
 
-    if (subscription) {
-      await subscription.unsubscribe();
-      
-      await supabase
-        .from('push_subscriptions')
-        .delete()
-        .eq('user_id', userId)
-        .eq('endpoint', subscription.endpoint);
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error unsubscribing from push:', error);
+/** Prompt user for notification permission via OneSignal */
+export async function requestOneSignalPermission(): Promise<boolean> {
+  const os = getOneSignal();
+  if (!os) return false;
+  try {
+    const permission = await os.Notifications.requestPermission();
+    console.log('[OneSignal] Permission result:', permission);
+    return permission;
+  } catch (e: any) {
+    console.error('[OneSignal] Permission error:', e.message);
     return false;
   }
 }
 
+/** Get OneSignal subscription status */
+export function getOneSignalStatus(): { permission: string; subscribed: boolean; userId: string | null } {
+  const os = getOneSignal();
+  if (!os) return { permission: 'unknown', subscribed: false, userId: null };
+  try {
+    const permission = os.Notifications?.permission ? 'granted' : (os.Notifications?.permissionNative || 'default');
+    const subscribed = os.User?.PushSubscription?.optedIn || false;
+    const userId = os.User?.externalId || null;
+    return { permission, subscribed, userId };
+  } catch {
+    return { permission: 'unknown', subscribed: false, userId: null };
+  }
+}
+
+// Keep these for backward compat with notification preferences
 export async function getNotificationPreferences(userId: string) {
   const { data, error } = await supabase
     .from('notification_preferences')

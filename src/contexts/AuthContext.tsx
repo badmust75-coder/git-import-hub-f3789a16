@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { autoSubscribeOnLogin } from '@/lib/notifications';
+import { oneSignalLogin, oneSignalLogout } from '@/lib/notifications';
 
 interface AuthContextType {
   user: User | null;
@@ -40,16 +40,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('user_id', userId)
         .eq('role', 'admin')
         .maybeSingle();
-      
-      if (error) {
-        console.error('Error checking admin role:', error);
-        return false;
-      }
+      if (error) { console.error('Error checking admin role:', error); return false; }
       return !!data;
-    } catch (err) {
-      console.error('Error in checkAdminRole:', err);
-      return false;
-    }
+    } catch (err) { console.error('Error in checkAdminRole:', err); return false; }
   };
 
   const checkApprovalStatus = async (userId: string) => {
@@ -59,19 +52,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .select('is_approved')
         .eq('user_id', userId)
         .maybeSingle();
-      if (error) {
-        console.error('Error checking approval:', error);
-        return false;
-      }
+      if (error) { console.error('Error checking approval:', error); return false; }
       return data?.is_approved ?? false;
-    } catch (err) {
-      console.error('Error in checkApprovalStatus:', err);
-      return false;
-    }
+    } catch (err) { console.error('Error in checkApprovalStatus:', err); return false; }
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
@@ -86,16 +72,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setIsAdmin(adminStatus);
             setIsApproved(adminStatus ? true : approvalStatus);
           }, 0);
+          // OneSignal: identify user
+          oneSignalLogin(session.user.id);
         } else {
           setIsAdmin(false);
           setIsApproved(null);
+          oneSignalLogout();
         }
         
         setLoading(false);
       }
     );
 
-    // THEN get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -107,10 +95,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ]);
         setIsAdmin(adminStatus);
         setIsApproved(adminStatus ? true : approvalStatus);
-        // Update last_seen on login
         await (supabase as any).from('profiles').update({ last_seen: new Date().toISOString() }).eq('user_id', session.user.id);
-        // Auto-subscribe to push notifications if permission granted
-        autoSubscribeOnLogin(session.user.id);
+        // OneSignal: identify user
+        oneSignalLogin(session.user.id);
       }
       
       setLoading(false);
@@ -122,64 +109,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (email: string, password: string, fullName?: string, gender?: string, dateOfBirth?: string) => {
     try {
       const { error } = await supabase.auth.signUp({
-        email,
-        password,
+        email, password,
         options: {
           emailRedirectTo: window.location.origin,
-          data: {
-            full_name: fullName,
-            gender,
-            date_of_birth: dateOfBirth,
-          },
+          data: { full_name: fullName, gender, date_of_birth: dateOfBirth },
         },
       });
-      
       if (error) throw error;
 
-      // Update profile with gender and date_of_birth after signup
-      // The trigger creates the profile, we update it
       const { data: { user: newUser } } = await supabase.auth.getUser();
       if (newUser) {
         const updateData: any = { full_name: fullName, gender };
-        if (dateOfBirth) {
-          updateData.date_of_birth = dateOfBirth;
-          updateData.dob_set_by_user = true;
-        }
-        await supabase
-          .from('profiles')
-          .update(updateData)
-          .eq('user_id', newUser.id);
-        // Send push notification to admin about new registration
+        if (dateOfBirth) { updateData.date_of_birth = dateOfBirth; updateData.dob_set_by_user = true; }
+        await supabase.from('profiles').update(updateData).eq('user_id', newUser.id);
         supabase.functions.invoke('send-push-notification', {
-          body: {
-            title: '📝 Nouvelle inscription',
-            body: `${fullName || email} demande à rejoindre l'application.`,
-            type: 'admin',
-          },
+          body: { title: '📝 Nouvelle inscription', body: `${fullName || email} demande à rejoindre l'application.`, type: 'admin' },
         }).catch(err => console.error('Push notification error:', err));
       }
 
       return { error: null };
-    } catch (error) {
-      return { error: error as Error };
-    }
+    } catch (error) { return { error: error as Error }; }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       return { error: null };
-    } catch (error) {
-      return { error: error as Error };
-    }
+    } catch (error) { return { error: error as Error }; }
   };
 
   const signOut = async () => {
+    oneSignalLogout();
     await supabase.auth.signOut();
     setIsAdmin(false);
     setIsApproved(null);
@@ -190,25 +151,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
-      
       if (error) throw error;
       return { error: null };
-    } catch (error) {
-      return { error: error as Error };
-    }
+    } catch (error) { return { error: error as Error }; }
   };
 
-  const value = {
-    user,
-    session,
-    loading,
-    isAdmin,
-    isApproved,
-    signUp,
-    signIn,
-    signOut,
-    resetPassword,
-  };
-
+  const value = { user, session, loading, isAdmin, isApproved, signUp, signIn, signOut, resetPassword };
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
