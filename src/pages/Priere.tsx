@@ -1,34 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
-  Check, Plus, Play, FileText, Type, Trash2, 
-  Droplets, Waves, Sunrise, Sun, CloudSun, Sunset, Moon, BookOpen, Hand,
-  Navigation, MapPin, ChevronDown, Clock
+  Clock, Navigation, MapPin, ChevronDown
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import ConfirmDeleteDialog from '@/components/ui/confirm-delete-dialog';
 import { usePrayerTimesCity, CITIES, CityOption } from '@/hooks/usePrayerTimesCity';
 import SunArcDisplay from '@/components/prayer/SunArcDisplay';
 import QiblaCompass from '@/components/prayer/QiblaCompass';
@@ -40,10 +20,9 @@ function getTodayKey(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// Icon mapping
-const iconMap: Record<string, React.ElementType> = {
-  Droplets, Waves, Sunrise, Sun, CloudSun, Sunset, Moon, BookOpen, Hand
-};
+const Priere = () => {
+  const { user, isAdmin } = useAuth();
+  const queryClient = useQueryClient();
 
 const Priere = () => {
   const { user, isAdmin } = useAuth();
