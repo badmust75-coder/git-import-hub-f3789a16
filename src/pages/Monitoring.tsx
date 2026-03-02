@@ -17,6 +17,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import AdminOnlineUsers from '@/components/admin/AdminOnlineUsers';
 import ScheduledNotifications from '@/components/admin/ScheduledNotifications';
+import AdminPrayerGroupManager from '@/components/admin/AdminPrayerGroupManager';
 import { format, subDays, startOfWeek, startOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
@@ -420,6 +421,9 @@ const Monitoring = () => {
 
         {/* SECTION 2.5: Scheduled Notifications */}
         <ScheduledNotifications />
+
+        {/* SECTION: Age/Class Management */}
+        <AdminPrayerGroupManager />
 
         {/* SECTION 3: Validations en attente */}
         <Card>
