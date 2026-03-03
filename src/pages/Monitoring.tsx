@@ -54,8 +54,8 @@ const Monitoring = () => {
   const [broadcasting, setBroadcasting] = useState(false);
   const [notifHistory, setNotifHistory] = useState<any[]>([]);
 
-  // OneSignal status
-  const [osStatus, setOsStatus] = useState<{ permission: string; subscribed: boolean; userId: string | null }>({ permission: '...', subscribed: false, userId: null });
+  // Push status
+  const [pushStatus, setPushStatus] = useState<{ permission: string; subscribed: boolean }>({ permission: '...', subscribed: false });
   const [testResult, setTestResult] = useState<{ status: number; body: string } | null>(null);
 
    // Section 3: Activity
@@ -101,18 +101,19 @@ const Monitoring = () => {
       setStatus(s => ({ ...s, sw: false }));
     }
 
-    // Push (OneSignal)
-    const osState = getOneSignalStatus();
-    setOsStatus(osState);
-    setStatus(s => ({ ...s, push: osState.subscribed }));
+    // Push status
+    const perm = 'Notification' in window ? Notification.permission : 'unsupported';
+    const sub = perm === 'granted';
+    setPushStatus({ permission: perm, subscribed: sub });
+    setStatus(s => ({ ...s, push: sub }));
 
     setLastRefresh(new Date());
   }, []);
 
   const loadPushData = useCallback(async () => {
-    // OneSignal status
-    const osState = getOneSignalStatus();
-    setOsStatus(osState);
+    // Push status
+    const perm = 'Notification' in window ? Notification.permission : 'unsupported';
+    setPushStatus({ permission: perm, subscribed: perm === 'granted' });
 
     const { data: hist } = await supabase.from('notification_history').select('*').order('created_at', { ascending: false }).limit(10);
     setNotifHistory(hist || []);
