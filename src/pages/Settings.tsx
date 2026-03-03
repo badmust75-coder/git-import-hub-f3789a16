@@ -11,10 +11,10 @@ import { Bell, Moon, Clock, User, Shield, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import {
-  requestOneSignalPermission,
   getNotificationPreferences,
   updateNotificationPreferences,
 } from '@/lib/notifications';
+import { useWebPush } from '@/hooks/useWebPush';
 
 const Settings = () => {
   const { user, isAdmin } = useAuth();

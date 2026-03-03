@@ -11,7 +11,7 @@ import { useUserProgress } from '@/hooks/useUserProgress';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { requestOneSignalPermission, isOneSignalReady } from '@/lib/notifications';
+import { useWebPush } from '@/hooks/useWebPush';
 import { sendPushNotification } from '@/lib/pushHelper';
 import { Button } from '@/components/ui/button';
 import {
