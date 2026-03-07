@@ -25,8 +25,9 @@ const moduleConfig: Record<ModuleType, { title: string; titleArabic: string }> =
 };
 
 const AdminModuleProgress = ({ module, onBack }: AdminModuleProgressProps) => {
-  const { data: students, isLoading } = useQuery({
+  const { data: students, isLoading, isError } = useQuery({
     queryKey: ['admin-module-progress', module],
+    retry: 2,
     queryFn: async () => {
       // Get all profiles
       const { data: profiles, error: profilesError } = await supabase
@@ -173,6 +174,20 @@ const AdminModuleProgress = ({ module, onBack }: AdminModuleProgressProps) => {
             <CardContent className="h-20 bg-muted/50" />
           </Card>
         ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-4">
+        <Button variant="ghost" onClick={onBack} className="mb-4">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Retour
+        </Button>
+        <div className="text-center py-8 text-destructive">
+          Erreur lors du chargement des données. Veuillez réessayer.
+        </div>
       </div>
     );
   }
