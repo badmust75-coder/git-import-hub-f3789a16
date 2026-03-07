@@ -18,6 +18,7 @@ interface RamadanDay {
   theme: string | null;
   video_url: string | null;
   pdf_url: string | null;
+  is_unlocked: boolean;
 }
 
 interface DayVideo {
@@ -86,8 +87,20 @@ const Ramadan = () => {
     queryFn: async () => {
       const { data, error } = await supabase.from('ramadan_days').select('*').order('day_number');
       if (error) throw error;
-      return data as RamadanDay[];
+      return (data as any[]).map(d => ({ ...d, is_unlocked: d.is_unlocked ?? false })) as RamadanDay[];
     },
+  });
+
+  // Fetch per-student day exceptions
+  const { data: dayExceptions = [] } = useQuery({
+    queryKey: ['ramadan-day-exceptions', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await (supabase as any).from('ramadan_day_exceptions').select('*').eq('user_id', user.id).eq('is_unlocked', true);
+      if (error) throw error;
+      return data as { id: string; user_id: string; day_id: number; is_unlocked: boolean }[];
+    },
+    enabled: !!user?.id,
   });
 
   const { data: quizzes = [] } = useQuery({
