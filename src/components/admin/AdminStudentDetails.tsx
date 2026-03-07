@@ -19,6 +19,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
+import AdminStudentGroups from './AdminStudentGroups';
 
 interface StudentProgress {
   sourates: { validated: number; total: number };
@@ -191,6 +192,12 @@ const AdminStudentDetails = ({ onBack }: AdminStudentDetailsProps) => {
           <h2 className="text-xl font-bold text-foreground">Élèves</h2>
           <p className="text-sm text-muted-foreground">{students?.length || 0} élève(s)</p>
         </div>
+      </div>
+
+      <AdminStudentGroups />
+
+      <div className="border-t pt-4 mt-2">
+        <h3 className="text-base font-semibold text-foreground mb-3">📋 Liste des élèves</h3>
       </div>
 
       <div className="relative mb-4">
