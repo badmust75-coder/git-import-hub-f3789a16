@@ -893,7 +893,8 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
           const hasQuiz = quizCount > 0;
           const isComplete = hasVideo && hasQuiz;
           const isPartial = hasVideo || hasQuiz;
-          const isLocked = !settings?.start_enabled;
+          const isGloballyUnlocked = (day as any).is_unlocked;
+          const hasExceptions = getExceptionsForDay(day.id).length > 0;
 
           return (
             <button
@@ -911,9 +912,9 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
               `}
             >
               <span className="text-lg font-bold leading-none">{day.day_number}</span>
-              {isLocked && (
-                <span className="absolute top-1 left-1 text-[10px]">🔒</span>
-              )}
+              <span className="absolute top-1 left-1 text-[10px]">
+                {isGloballyUnlocked ? '🔓' : hasExceptions ? '🔑' : '🔒'}
+              </span>
               <span className="absolute bottom-1 right-1 text-[10px] opacity-50">✏️</span>
             </button>
           );
