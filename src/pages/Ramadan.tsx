@@ -243,6 +243,14 @@ const Ramadan = () => {
   });
 
   const handleDayClick = (day: RamadanDay) => {
+    console.log('DEBUG RAMADAN:', {
+      dayNumber: day.day_number,
+      currentRamadanDay,
+      ramadanStart: ramadanStart.toISOString(),
+      isOldLocked: isOldLocked(day),
+      isFutureDay: isFutureDay(day),
+      todayDate: new Date().toISOString(),
+    });
     // Check future days first
     if (isFutureDay(day)) {
       toast.info('Ce jour n\'est pas encore disponible 🔒', {
