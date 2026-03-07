@@ -184,7 +184,7 @@ const AdminGlobalStats = ({ onBack }: Props) => {
               <CardContent className="py-2 px-3 flex items-center gap-3">
                 <span className="text-lg w-8 text-center">{medals[i] || `${i + 1}.`}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm break-words">{s.name}</p>
+                  <p className="font-medium text-sm break-words">{String(s.name)}</p>
                 </div>
                 <div className="text-right text-xs text-muted-foreground whitespace-nowrap">
                   <p>{s.quiz} quiz</p>
