@@ -148,6 +148,18 @@ const AdminModuleProgress = ({ module, onBack }: AdminModuleProgressProps) => {
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const selectedStudentData = students?.find(s => s.user_id === selectedStudent);
 
+  // Show Ramadan detail view when a student is selected and module is ramadan
+  if (selectedStudent && module === 'ramadan') {
+    const studentData = students?.find(s => s.user_id === selectedStudent);
+    return (
+      <AdminRamadanStudentDetail
+        studentId={selectedStudent}
+        studentName={studentData?.full_name || 'Élève'}
+        onBack={() => setSelectedStudent(null)}
+      />
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-4">
