@@ -525,7 +525,45 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
     },
   });
 
-  // Reset calendar mutation
+  // Toggle is_unlocked on a day (global unlock)
+  const toggleDayUnlockMutation = useMutation({
+    mutationFn: async ({ dayId, isUnlocked }: { dayId: number; isUnlocked: boolean }) => {
+      const { error } = await (supabase as any).from('ramadan_days').update({ is_unlocked: isUnlocked }).eq('id', dayId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-ramadan-days-manager'] });
+      queryClient.invalidateQueries({ queryKey: ['ramadan-days'] });
+      toast({ title: 'Statut de verrouillage mis à jour' });
+    },
+  });
+
+  // Add per-student exception
+  const addExceptionMutation = useMutation({
+    mutationFn: async ({ userId, dayId }: { userId: string; dayId: number }) => {
+      const { error } = await (supabase as any).from('ramadan_day_exceptions').upsert({ user_id: userId, day_id: dayId, is_unlocked: true }, { onConflict: 'user_id,day_id' });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-ramadan-day-exceptions'] });
+      toast({ title: 'Jour déverrouillé pour cet élève' });
+      setSelectedStudentForException('');
+    },
+  });
+
+  // Delete exception
+  const deleteExceptionMutation = useMutation({
+    mutationFn: async (exceptionId: string) => {
+      const { error } = await (supabase as any).from('ramadan_day_exceptions').delete().eq('id', exceptionId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-ramadan-day-exceptions'] });
+      toast({ title: 'Exception supprimée' });
+    },
+  });
+
+
   const resetCalendarMutation = useMutation({
     mutationFn: async () => {
       const { error: respError } = await supabase
