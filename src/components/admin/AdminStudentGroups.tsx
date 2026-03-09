@@ -51,44 +51,37 @@ const getAgeGroup = (dateOfBirth: string | null): string => {
   return 'adultes';
 };
 
-// Sortable group card component
-const SortableGroupCard = ({
+// Group card component with native HTML5 drag & drop
+const DraggableGroupCard = ({
   group,
   onEdit,
   onDelete,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  isDragging,
 }: {
   group: StudentGroup;
   onEdit: (group: StudentGroup) => void;
   onDelete: (groupId: string) => void;
+  onDragStart: (id: string) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: (id: string) => void;
+  isDragging: boolean;
 }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: group.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 10 : undefined,
-  };
-
   return (
-    <Card ref={setNodeRef} style={style} className="transition-shadow">
+    <Card
+      draggable
+      onDragStart={() => onDragStart(group.id)}
+      onDragOver={onDragOver}
+      onDrop={() => onDrop(group.id)}
+      className="transition-shadow"
+      style={{ opacity: isDragging ? 0.5 : 1 }}
+    >
       <CardContent className="p-3">
         <div className="flex items-start justify-between gap-1">
           <div className="flex items-start gap-2 min-w-0 flex-1">
-            <button
-              {...attributes}
-              {...listeners}
-              className="cursor-grab active:cursor-grabbing touch-none mt-0.5"
-            >
-              <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
-            </button>
+            <GripVertical className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5 cursor-grab" />
             <div className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1 ${group.color}`} />
             <span className="text-sm font-bold leading-tight break-words">{group.name}</span>
           </div>
