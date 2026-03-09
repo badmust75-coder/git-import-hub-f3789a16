@@ -656,8 +656,9 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
     e.target.value = '';
   };
 
-  const handleOpenDay = (dayId: number) => {
+  const handleOpenDay = (dayId: number, section?: 'video' | 'quiz') => {
     setSelectedDay(dayId);
+    setScrollToSection(section || null);
     const day = days.find(d => d.id === dayId);
     setThemeInput(day?.theme || '');
     const existing = getQuizzesForDay(dayId);
@@ -675,6 +676,18 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
       setQuestions([emptyQuestion()]);
     }
   };
+
+  // Scroll to section after dialog opens
+  useEffect(() => {
+    if (selectedDay && scrollToSection) {
+      const timer = setTimeout(() => {
+        const ref = scrollToSection === 'video' ? videoSectionRef : quizSectionRef;
+        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setScrollToSection(null);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedDay, scrollToSection]);
 
   const updateQuestion = (idx: number, field: keyof QuestionForm, value: unknown) => {
     setQuestions(prev => {
