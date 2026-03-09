@@ -1294,17 +1294,26 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
 
       <ConfirmDeleteDialog
         open={!!deleteTarget}
-        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onOpenChange={(open) => {
+          // Only clear on dismiss (Escape/Cancel), not on confirm action
+          if (!open) {
+            // Use setTimeout to let onConfirm fire first
+            setTimeout(() => setDeleteTarget(null), 0);
+          }
+        }}
         onConfirm={() => {
-          if (deleteTarget?.type === 'quiz' && deleteTarget.id) {
-            deleteQuizMutation.mutate(deleteTarget.id);
-            setQuestions(prev => prev.filter(q => q.existingId !== deleteTarget.id));
-          } else if (deleteTarget?.type === 'allQuizzes' && deleteTarget.dayId) {
-            deleteAllQuizzesMutation.mutate(deleteTarget.dayId);
-          } else if (deleteTarget?.type === 'video' && deleteTarget.id) {
-            deleteVideoMutation.mutate(deleteTarget.id);
-          } else if (deleteTarget?.type === 'activity' && deleteTarget.id) {
-            deleteActivityMutation.mutate(deleteTarget.id);
+          // Capture current target before any state changes
+          const target = deleteTarget;
+          if (!target) return;
+          if (target.type === 'quiz' && target.id) {
+            deleteQuizMutation.mutate(target.id);
+            setQuestions(prev => prev.filter(q => q.existingId !== target.id));
+          } else if (target.type === 'allQuizzes' && target.dayId) {
+            deleteAllQuizzesMutation.mutate(target.dayId);
+          } else if (target.type === 'video' && target.id) {
+            deleteVideoMutation.mutate(target.id);
+          } else if (target.type === 'activity' && target.id) {
+            deleteActivityMutation.mutate(target.id);
           }
           setDeleteTarget(null);
         }}
