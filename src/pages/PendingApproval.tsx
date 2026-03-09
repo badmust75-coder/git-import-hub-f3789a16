@@ -1,10 +1,59 @@
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Clock, LogOut } from 'lucide-react';
+import { Clock, LogOut, RefreshCw } from 'lucide-react';
 
 const PendingApproval = () => {
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
+  const [checking, setChecking] = useState(false);
+
+  const checkApproval = async () => {
+    if (!user) return;
+    setChecking(true);
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('is_approved')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (data?.is_approved) {
+        // Force full reload to re-init auth state
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error('Check approval error:', err);
+    }
+    setChecking(false);
+  };
+
+  // Poll every 5 seconds + realtime subscription
+  useEffect(() => {
+    if (!user) return;
+
+    const interval = setInterval(checkApproval, 5000);
+
+    const channel = supabase
+      .channel(`pending-approval-${user.id}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles',
+        filter: `user_id=eq.${user.id}`,
+      }, (payload: any) => {
+        if (payload.new?.is_approved) {
+          window.location.reload();
+        }
+      })
+      .subscribe();
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-primary via-royal-dark to-primary pattern-islamic">
@@ -26,14 +75,26 @@ const PendingApproval = () => {
           <p className="text-sm text-muted-foreground">
             بارك الله فيك — Qu'Allah vous bénisse pour votre patience.
           </p>
-          <Button
-            variant="outline"
-            onClick={signOut}
-            className="mt-4"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Se déconnecter
-          </Button>
+          <p className="text-xs text-muted-foreground/70 animate-pulse">
+            Vérification automatique en cours...
+          </p>
+          <div className="flex flex-col gap-2 mt-4">
+            <Button
+              variant="outline"
+              onClick={checkApproval}
+              disabled={checking}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${checking ? 'animate-spin' : ''}`} />
+              Vérifier maintenant
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={signOut}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Se déconnecter
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
