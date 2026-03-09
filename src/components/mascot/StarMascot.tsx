@@ -363,12 +363,21 @@ Clique sur n'importe quel module pour commencer !
 
   return (
     <>
-      {/* Floating Star Button */}
+      {/* Draggable Floating Star Button */}
       <Button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 right-4 z-50 w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-500 hover:from-yellow-300 hover:via-yellow-400 hover:to-amber-400 shadow-lg hover:shadow-xl transition-all duration-300 p-0 group"
+        ref={starRef}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        onClick={() => !isDragging && setIsOpen(true)}
+        style={{
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+          cursor: isDragging ? 'grabbing' : 'grab',
+          touchAction: 'none',
+        }}
+        className="fixed z-50 w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-500 hover:from-yellow-300 hover:via-yellow-400 hover:to-amber-400 shadow-lg hover:shadow-xl transition-all duration-300 p-0 group"
       >
-        <Star className="h-8 w-8 text-white drop-shadow-md group-hover:scale-110 transition-transform animate-pulse" />
+        <Star className="h-8 w-8 text-white drop-shadow-md group-hover:scale-110 transition-transform animate-pulse pointer-events-none" />
       </Button>
 
       {/* Mascot Dialog */}
