@@ -278,7 +278,7 @@ const AdminStudentGroups = () => {
     const reordered = arrayMove(groups, oldIndex, newIndex);
 
     // Optimistic update
-    const updated = reordered.map((g, i) => ({ ...g, display_order: i }));
+    const updated = reordered.map((g: StudentGroup, i: number) => ({ ...g, display_order: i }));
     queryClient.setQueryData(['student-groups'], updated);
 
     // Persist to DB
