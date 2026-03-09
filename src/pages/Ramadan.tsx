@@ -438,13 +438,13 @@ const Ramadan = () => {
             <span>En attente</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-4 h-4 rounded bg-[hsl(40,30%,92%)] flex items-center justify-center">
-              <Lock className="h-2 w-2 text-[hsl(30,20%,50%)]" />
+            <div className="w-4 h-4 rounded bg-gray-200 relative">
+              <span className="absolute -top-0.5 -right-0.5 text-[6px]">🔒</span>
             </div>
             <span>Verrouillé</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-4 h-4 rounded bg-[hsl(140,40%,92%)]" />
+            <div className="w-4 h-4 rounded bg-green-200" />
             <span>Disponible</span>
           </div>
         </div>
