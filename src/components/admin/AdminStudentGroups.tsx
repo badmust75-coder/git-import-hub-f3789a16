@@ -337,7 +337,7 @@ const AdminStudentGroups = () => {
         </Button>
       </div>
 
-      {groups.length === 0 ? (
+      {(!groups || groups.length === 0) ? (
         <p className="text-sm text-muted-foreground text-center py-4">Aucun groupe créé</p>
       ) : (
         <DndContext
