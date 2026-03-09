@@ -316,27 +316,20 @@ const AdminStudentGroups = () => {
       {(!groups || groups.length === 0) ? (
         <p className="text-sm text-muted-foreground text-center py-4">Aucun groupe créé</p>
       ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={(groups || []).map(g => g.id)}
-            strategy={rectSortingStrategy}
-          >
-            <div className="grid grid-cols-2 gap-3">
-              {(groups || []).map((group) => (
-                <SortableGroupCard
-                  key={group.id}
-                  group={group}
-                  onEdit={openEdit}
-                  onDelete={handleDeleteGroup}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+        <div className="grid grid-cols-2 gap-3">
+          {(groups || []).map((group) => (
+            <DraggableGroupCard
+              key={group.id}
+              group={group}
+              onEdit={openEdit}
+              onDelete={handleDeleteGroup}
+              onDragStart={handleDragStart}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDrop}
+              isDragging={draggedId === group.id}
+            />
+          ))}
+        </div>
       )}
 
       {/* Create/Edit Dialog */}
