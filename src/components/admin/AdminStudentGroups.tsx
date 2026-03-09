@@ -145,6 +145,7 @@ const AdminStudentGroups = () => {
   const [genderFilter, setGenderFilter] = useState<GenderFilter>('tous');
 
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   // Fetch groups with members
   const { data: groups = [] } = useQuery({
