@@ -43,7 +43,7 @@ const StarMascot = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [userAge, setUserAge] = useState<number | null>(null);
 
-  // Get user age from profile
+  // Get user age from profile and set up window resize handler
   useEffect(() => {
     const getUserAge = async () => {
       if (!user) return;
@@ -66,7 +66,17 @@ const StarMascot = () => {
       }
     };
 
+    const handleResize = () => {
+      // Keep star within bounds on window resize
+      setPosition(prev => ({
+        x: Math.min(prev.x, window.innerWidth - 64),
+        y: Math.min(prev.y, window.innerHeight - 64)
+      }));
+    };
+
     getUserAge();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [user]);
 
   // Welcome message when opening
