@@ -646,7 +646,7 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && selectedDay) {
+    if (file && selectedDay && !uploadVideoMutation.isPending) {
       uploadVideoMutation.mutate({ dayId: selectedDay, file });
     }
     e.target.value = '';
