@@ -31,4 +31,4 @@ export default defineConfig(({ mode }) => ({
     include: ["react", "react-dom", "@radix-ui/react-tooltip"],
     force: true,
   },
-});
+}));
