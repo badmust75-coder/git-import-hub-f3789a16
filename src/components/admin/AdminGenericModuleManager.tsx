@@ -15,10 +15,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
-  GripVertical, Plus, Pencil, Trash2, Upload, Loader2,
-  ArrowLeft, Video, FileText, Volume2, Image as ImageIcon, File,
+  GripVertical, Plus, Pencil, Trash2, Loader2,
+  ArrowLeft, Image as ImageIcon,
 } from 'lucide-react';
 import ConfirmDeleteDialog from '@/components/ui/confirm-delete-dialog';
+import ContentUploadTabs from './ContentUploadTabs';
+import ContentItemCard, { ContentType } from './ContentItemCard';
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent,
 } from '@dnd-kit/core';
