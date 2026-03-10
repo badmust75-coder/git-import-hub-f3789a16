@@ -16,56 +16,69 @@ export type Database = {
     Tables: {
       admin_card_order: {
         Row: {
-          card_key: string
-          display_order: number
+          card_key: string | null
+          card_order: Json | null
+          created_at: string | null
+          display_order: number | null
           id: string
-          updated_at: string
+          updated_at: string | null
+          user_id: string
         }
         Insert: {
-          card_key: string
-          display_order?: number
+          card_key?: string | null
+          card_order?: Json | null
+          created_at?: string | null
+          display_order?: number | null
           id?: string
-          updated_at?: string
+          updated_at?: string | null
+          user_id: string
         }
         Update: {
-          card_key?: string
-          display_order?: number
+          card_key?: string | null
+          card_order?: Json | null
+          created_at?: string | null
+          display_order?: number | null
           id?: string
-          updated_at?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
       admin_conversations: {
         Row: {
-          admin_user_id: string
-          created_at: string
+          admin_id: string | null
+          created_at: string | null
           id: string
-          messages: Json
-          topic: string
-          updated_at: string
+          last_message: string | null
+          last_message_at: string | null
+          unread_count: number | null
+          user_id: string
         }
         Insert: {
-          admin_user_id: string
-          created_at?: string
+          admin_id?: string | null
+          created_at?: string | null
           id?: string
-          messages?: Json
-          topic?: string
-          updated_at?: string
+          last_message?: string | null
+          last_message_at?: string | null
+          unread_count?: number | null
+          user_id: string
         }
         Update: {
-          admin_user_id?: string
-          created_at?: string
+          admin_id?: string | null
+          created_at?: string | null
           id?: string
-          messages?: Json
-          topic?: string
-          updated_at?: string
+          last_message?: string | null
+          last_message_at?: string | null
+          unread_count?: number | null
+          user_id?: string
         }
         Relationships: []
       }
       allah_names: {
         Row: {
-          created_at: string
-          display_order: number
+          audio_url: string | null
+          created_at: string | null
+          display_order: number | null
           explanation: string | null
           id: number
           image_url: string | null
@@ -74,20 +87,22 @@ export type Database = {
           transliteration: string | null
         }
         Insert: {
-          created_at?: string
-          display_order?: number
+          audio_url?: string | null
+          created_at?: string | null
+          display_order?: number | null
           explanation?: string | null
-          id?: never
+          id?: number
           image_url?: string | null
           name_arabic: string
           name_french: string
           transliteration?: string | null
         }
         Update: {
-          created_at?: string
-          display_order?: number
+          audio_url?: string | null
+          created_at?: string | null
+          display_order?: number | null
           explanation?: string | null
-          id?: never
+          id?: number
           image_url?: string | null
           name_arabic?: string
           name_french?: string
@@ -98,19 +113,19 @@ export type Database = {
       alphabet_content: {
         Row: {
           content_type: string
-          created_at: string
-          display_order: number
-          file_name: string
+          created_at: string | null
+          display_order: number | null
+          file_name: string | null
           file_url: string
           id: string
           letter_id: number
           uploaded_by: string | null
         }
         Insert: {
-          content_type: string
-          created_at?: string
-          display_order?: number
-          file_name: string
+          content_type?: string
+          created_at?: string | null
+          display_order?: number | null
+          file_name?: string | null
           file_url: string
           id?: string
           letter_id: number
@@ -118,9 +133,9 @@ export type Database = {
         }
         Update: {
           content_type?: string
-          created_at?: string
-          display_order?: number
-          file_name?: string
+          created_at?: string | null
+          display_order?: number | null
+          file_name?: string | null
           file_url?: string
           id?: string
           letter_id?: number
@@ -139,116 +154,113 @@ export type Database = {
       alphabet_letters: {
         Row: {
           audio_url: string | null
-          created_at: string
+          created_at: string | null
+          display_order: number | null
           id: number
           letter_arabic: string
           name_arabic: string
           name_french: string
-          position_final: string | null
-          position_initial: string | null
-          position_isolated: string | null
-          position_medial: string | null
         }
         Insert: {
           audio_url?: string | null
-          created_at?: string
+          created_at?: string | null
+          display_order?: number | null
           id?: number
           letter_arabic: string
           name_arabic: string
           name_french: string
-          position_final?: string | null
-          position_initial?: string | null
-          position_isolated?: string | null
-          position_medial?: string | null
         }
         Update: {
           audio_url?: string | null
-          created_at?: string
+          created_at?: string | null
+          display_order?: number | null
           id?: number
           letter_arabic?: string
           name_arabic?: string
           name_french?: string
-          position_final?: string | null
-          position_initial?: string | null
-          position_isolated?: string | null
-          position_medial?: string | null
         }
         Relationships: []
       }
       app_logs: {
         Row: {
-          context: Json | null
-          created_at: string
+          action: string
+          created_at: string | null
+          details: Json | null
           id: string
-          is_read: boolean
-          level: string
-          message: string
+          level: string | null
           user_id: string | null
         }
         Insert: {
-          context?: Json | null
-          created_at?: string
+          action: string
+          created_at?: string | null
+          details?: Json | null
           id?: string
-          is_read?: boolean
-          level?: string
-          message: string
+          level?: string | null
           user_id?: string | null
         }
         Update: {
-          context?: Json | null
-          created_at?: string
+          action?: string
+          created_at?: string | null
+          details?: Json | null
           id?: string
-          is_read?: boolean
-          level?: string
-          message?: string
+          level?: string | null
           user_id?: string | null
         }
         Relationships: []
       }
       attendance_records: {
         Row: {
-          created_at: string
+          created_at: string | null
           date: string
           id: string
-          recorded_by: string | null
+          marked_by: string | null
+          notes: string | null
           status: string
-          updated_at: string
           user_id: string
         }
         Insert: {
-          created_at?: string
-          date: string
+          created_at?: string | null
+          date?: string
           id?: string
-          recorded_by?: string | null
+          marked_by?: string | null
+          notes?: string | null
           status?: string
-          updated_at?: string
           user_id: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           date?: string
           id?: string
-          recorded_by?: string | null
+          marked_by?: string | null
+          notes?: string | null
           status?: string
-          updated_at?: string
           user_id?: string
         }
         Relationships: []
       }
       connexion_logs: {
         Row: {
-          connected_at: string
+          created_at: string | null
           id: string
+          ip_address: string | null
+          login_at: string | null
+          user_agent: string | null
           user_id: string
         }
         Insert: {
-          connected_at?: string
+          created_at?: string | null
           id?: string
+          ip_address?: string | null
+          login_at?: string | null
+          user_agent?: string | null
           user_id: string
         }
         Update: {
-          connected_at?: string
+          created_at?: string | null
           id?: string
+          ip_address?: string | null
+          login_at?: string | null
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: []
@@ -256,20 +268,26 @@ export type Database = {
       dashboard_card_visibility: {
         Row: {
           card_id: string
-          created_at: string
+          created_at: string | null
           id: string
+          is_visible: boolean | null
+          updated_by: string | null
           user_id: string
         }
         Insert: {
           card_id: string
-          created_at?: string
+          created_at?: string | null
           id?: string
+          is_visible?: boolean | null
+          updated_by?: string | null
           user_id: string
         }
         Update: {
           card_id?: string
-          created_at?: string
+          created_at?: string | null
           id?: string
+          is_visible?: boolean | null
+          updated_by?: string | null
           user_id?: string
         }
         Relationships: [
@@ -284,49 +302,58 @@ export type Database = {
       }
       dashboard_cards: {
         Row: {
-          bg_color: string
+          bg_color: string | null
+          card_key: string | null
           content: string | null
-          content_type: string
-          created_at: string
+          content_type: string | null
+          created_at: string | null
           created_by: string | null
-          display_order: number
+          description: string | null
+          display_order: number | null
           file_name: string | null
           file_url: string | null
-          icon: string
+          icon: string | null
           id: string
-          is_public: boolean
+          is_active: boolean | null
+          is_public: boolean | null
+          route: string | null
           title: string
-          updated_at: string
         }
         Insert: {
-          bg_color?: string
+          bg_color?: string | null
+          card_key?: string | null
           content?: string | null
-          content_type?: string
-          created_at?: string
+          content_type?: string | null
+          created_at?: string | null
           created_by?: string | null
-          display_order?: number
+          description?: string | null
+          display_order?: number | null
           file_name?: string | null
           file_url?: string | null
-          icon?: string
+          icon?: string | null
           id?: string
-          is_public?: boolean
+          is_active?: boolean | null
+          is_public?: boolean | null
+          route?: string | null
           title: string
-          updated_at?: string
         }
         Update: {
-          bg_color?: string
+          bg_color?: string | null
+          card_key?: string | null
           content?: string | null
-          content_type?: string
-          created_at?: string
+          content_type?: string | null
+          created_at?: string | null
           created_by?: string | null
-          display_order?: number
+          description?: string | null
+          display_order?: number | null
           file_name?: string | null
           file_url?: string | null
-          icon?: string
+          icon?: string | null
           id?: string
-          is_public?: boolean
+          is_active?: boolean | null
+          is_public?: boolean | null
+          route?: string | null
           title?: string
-          updated_at?: string
         }
         Relationships: []
       }
@@ -334,73 +361,97 @@ export type Database = {
         Row: {
           audio_url: string | null
           completed_at: string | null
-          created_at: string
-          created_by: string
+          created_at: string | null
+          created_by: string | null
           description: string | null
+          due_date: string | null
           id: string
+          is_active: boolean | null
           lesson_reference: string | null
-          status: string
-          subject: string
+          status: string | null
+          subject: string | null
           title: string
-          updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           audio_url?: string | null
           completed_at?: string | null
-          created_at?: string
-          created_by: string
+          created_at?: string | null
+          created_by?: string | null
           description?: string | null
+          due_date?: string | null
           id?: string
+          is_active?: boolean | null
           lesson_reference?: string | null
-          status?: string
-          subject: string
+          status?: string | null
+          subject?: string | null
           title: string
-          updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           audio_url?: string | null
           completed_at?: string | null
-          created_at?: string
-          created_by?: string
+          created_at?: string | null
+          created_by?: string | null
           description?: string | null
+          due_date?: string | null
           id?: string
+          is_active?: boolean | null
           lesson_reference?: string | null
-          status?: string
-          subject?: string
+          status?: string | null
+          subject?: string | null
           title?: string
-          updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
       homework_submissions: {
         Row: {
           assignment_id: string
-          content_type: string
-          created_at: string
-          file_name: string
-          file_url: string
+          audio_url: string | null
+          created_at: string | null
+          feedback: string | null
+          file_name: string | null
+          file_type: string | null
+          file_url: string | null
+          grade: string | null
           id: string
+          notes: string | null
+          reviewed_by: string | null
+          status: string | null
+          submitted_at: string | null
           user_id: string
         }
         Insert: {
           assignment_id: string
-          content_type: string
-          created_at?: string
-          file_name: string
-          file_url: string
+          audio_url?: string | null
+          created_at?: string | null
+          feedback?: string | null
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          grade?: string | null
           id?: string
+          notes?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          submitted_at?: string | null
           user_id: string
         }
         Update: {
           assignment_id?: string
-          content_type?: string
-          created_at?: string
-          file_name?: string
-          file_url?: string
+          audio_url?: string | null
+          created_at?: string | null
+          feedback?: string | null
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          grade?: string | null
           id?: string
+          notes?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          submitted_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -416,19 +467,19 @@ export type Database = {
       invocation_content: {
         Row: {
           content_type: string
-          created_at: string
-          display_order: number
-          file_name: string
+          created_at: string | null
+          display_order: number | null
+          file_name: string | null
           file_url: string
           id: string
           invocation_id: number
           uploaded_by: string | null
         }
         Insert: {
-          content_type: string
-          created_at?: string
-          display_order?: number
-          file_name: string
+          content_type?: string
+          created_at?: string | null
+          display_order?: number | null
+          file_name?: string | null
           file_url: string
           id?: string
           invocation_id: number
@@ -436,9 +487,9 @@ export type Database = {
         }
         Update: {
           content_type?: string
-          created_at?: string
-          display_order?: number
-          file_name?: string
+          created_at?: string | null
+          display_order?: number | null
+          file_name?: string | null
           file_url?: string
           id?: string
           invocation_id?: number
@@ -456,30 +507,30 @@ export type Database = {
       }
       invocation_validation_requests: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
           invocation_id: number
           reviewed_at: string | null
           reviewed_by: string | null
-          status: string
+          status: string | null
           user_id: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           invocation_id: number
           reviewed_at?: string | null
           reviewed_by?: string | null
-          status?: string
+          status?: string | null
           user_id: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           invocation_id?: number
           reviewed_at?: string | null
           reviewed_by?: string | null
-          status?: string
+          status?: string | null
           user_id?: string
         }
         Relationships: [
@@ -494,38 +545,32 @@ export type Database = {
       }
       invocations: {
         Row: {
-          audio_url: string | null
           category: string | null
-          content_arabic: string | null
-          content_french: string | null
-          created_at: string
-          display_order: number
+          created_at: string | null
+          display_order: number | null
           id: number
           image_url: string | null
+          is_locked: boolean | null
           title_arabic: string
           title_french: string
         }
         Insert: {
-          audio_url?: string | null
           category?: string | null
-          content_arabic?: string | null
-          content_french?: string | null
-          created_at?: string
-          display_order?: number
+          created_at?: string | null
+          display_order?: number | null
           id?: number
           image_url?: string | null
+          is_locked?: boolean | null
           title_arabic: string
           title_french: string
         }
         Update: {
-          audio_url?: string | null
           category?: string | null
-          content_arabic?: string | null
-          content_french?: string | null
-          created_at?: string
-          display_order?: number
+          created_at?: string | null
+          display_order?: number | null
           id?: number
           image_url?: string | null
+          is_locked?: boolean | null
           title_arabic?: string
           title_french?: string
         }
@@ -534,51 +579,51 @@ export type Database = {
       learning_modules: {
         Row: {
           builtin_path: string | null
-          created_at: string
+          created_at: string | null
           description: string | null
-          display_order: number
-          gradient: string
-          icon: string
-          icon_color: string
+          display_order: number | null
+          gradient: string | null
+          icon: string | null
+          icon_color: string | null
           id: string
           image_url: string | null
-          is_active: boolean
-          is_builtin: boolean
+          is_active: boolean | null
+          is_builtin: boolean | null
+          module_type: string
           title: string
-          title_arabic: string
-          updated_at: string
+          title_arabic: string | null
         }
         Insert: {
           builtin_path?: string | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
-          display_order?: number
-          gradient?: string
-          icon?: string
-          icon_color?: string
+          display_order?: number | null
+          gradient?: string | null
+          icon?: string | null
+          icon_color?: string | null
           id?: string
           image_url?: string | null
-          is_active?: boolean
-          is_builtin?: boolean
+          is_active?: boolean | null
+          is_builtin?: boolean | null
+          module_type: string
           title: string
-          title_arabic?: string
-          updated_at?: string
+          title_arabic?: string | null
         }
         Update: {
           builtin_path?: string | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
-          display_order?: number
-          gradient?: string
-          icon?: string
-          icon_color?: string
+          display_order?: number | null
+          gradient?: string | null
+          icon?: string | null
+          icon_color?: string | null
           id?: string
           image_url?: string | null
-          is_active?: boolean
-          is_builtin?: boolean
+          is_active?: boolean | null
+          is_builtin?: boolean | null
+          module_type?: string
           title?: string
-          title_arabic?: string
-          updated_at?: string
+          title_arabic?: string | null
         }
         Relationships: []
       }
@@ -586,19 +631,19 @@ export type Database = {
         Row: {
           card_id: string
           content_type: string
-          created_at: string
-          display_order: number
-          file_name: string
+          created_at: string | null
+          display_order: number | null
+          file_name: string | null
           file_url: string
           id: string
           uploaded_by: string | null
         }
         Insert: {
           card_id: string
-          content_type: string
-          created_at?: string
-          display_order?: number
-          file_name: string
+          content_type?: string
+          created_at?: string | null
+          display_order?: number | null
+          file_name?: string | null
           file_url: string
           id?: string
           uploaded_by?: string | null
@@ -606,9 +651,9 @@ export type Database = {
         Update: {
           card_id?: string
           content_type?: string
-          created_at?: string
-          display_order?: number
-          file_name?: string
+          created_at?: string | null
+          display_order?: number | null
+          file_name?: string | null
           file_url?: string
           id?: string
           uploaded_by?: string | null
@@ -625,75 +670,77 @@ export type Database = {
       }
       module_cards: {
         Row: {
-          created_at: string
+          created_at: string | null
           description: string | null
-          display_order: number
+          display_order: number | null
           id: string
           image_url: string | null
+          is_locked: boolean | null
           module_id: string
-          section: string | null
           title: string
-          title_arabic: string | null
-          updated_at: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           description?: string | null
-          display_order?: number
+          display_order?: number | null
           id?: string
           image_url?: string | null
+          is_locked?: boolean | null
           module_id: string
-          section?: string | null
           title: string
-          title_arabic?: string | null
-          updated_at?: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           description?: string | null
-          display_order?: number
+          display_order?: number | null
           id?: string
           image_url?: string | null
+          is_locked?: boolean | null
           module_id?: string
-          section?: string | null
           title?: string
-          title_arabic?: string | null
-          updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "module_cards_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "learning_modules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       module_content: {
         Row: {
           content_type: string
-          created_at: string
-          display_order: number
-          file_name: string
+          created_at: string | null
+          display_order: number | null
+          file_name: string | null
           file_url: string
           id: string
           module_id: string
-          title: string
+          title: string | null
           uploaded_by: string | null
         }
         Insert: {
-          content_type: string
-          created_at?: string
-          display_order?: number
-          file_name: string
+          content_type?: string
+          created_at?: string | null
+          display_order?: number | null
+          file_name?: string | null
           file_url: string
           id?: string
           module_id: string
-          title: string
+          title?: string | null
           uploaded_by?: string | null
         }
         Update: {
           content_type?: string
-          created_at?: string
-          display_order?: number
-          file_name?: string
+          created_at?: string | null
+          display_order?: number | null
+          file_name?: string | null
           file_url?: string
           id?: string
           module_id?: string
-          title?: string
+          title?: string | null
           uploaded_by?: string | null
         }
         Relationships: [
@@ -708,19 +755,22 @@ export type Database = {
       }
       notification_confirmations: {
         Row: {
-          confirmed_at: string
+          confirmed_at: string | null
+          created_at: string | null
           id: string
           notification_id: string
           user_id: string
         }
         Insert: {
-          confirmed_at?: string
+          confirmed_at?: string | null
+          created_at?: string | null
           id?: string
           notification_id: string
           user_id: string
         }
         Update: {
-          confirmed_at?: string
+          confirmed_at?: string | null
+          created_at?: string | null
           id?: string
           notification_id?: string
           user_id?: string
@@ -730,91 +780,85 @@ export type Database = {
             foreignKeyName: "notification_confirmations_notification_id_fkey"
             columns: ["notification_id"]
             isOneToOne: false
-            referencedRelation: "scheduled_notifications"
+            referencedRelation: "notification_history"
             referencedColumns: ["id"]
           },
         ]
       }
       notification_history: {
         Row: {
-          body: string
-          created_at: string
-          expired_cleaned: number
-          failed_sends: number
+          body: string | null
+          created_at: string | null
           id: string
           sent_by: string | null
-          successful_sends: number
+          target_type: string | null
+          target_user_id: string | null
           title: string
-          total_recipients: number
-          type: string
+          type: string | null
         }
         Insert: {
-          body: string
-          created_at?: string
-          expired_cleaned?: number
-          failed_sends?: number
+          body?: string | null
+          created_at?: string | null
           id?: string
           sent_by?: string | null
-          successful_sends?: number
+          target_type?: string | null
+          target_user_id?: string | null
           title: string
-          total_recipients?: number
-          type?: string
+          type?: string | null
         }
         Update: {
-          body?: string
-          created_at?: string
-          expired_cleaned?: number
-          failed_sends?: number
+          body?: string | null
+          created_at?: string | null
           id?: string
           sent_by?: string | null
-          successful_sends?: number
+          target_type?: string | null
+          target_user_id?: string | null
           title?: string
-          total_recipients?: number
-          type?: string
+          type?: string | null
         }
         Relationships: []
       }
       notification_preferences: {
         Row: {
-          asr_reminder: boolean
-          created_at: string
+          asr_reminder: boolean | null
+          created_at: string | null
           daily_reminder_time: string | null
-          dhuhr_reminder: boolean
-          fajr_reminder: boolean
+          dhuhr_reminder: boolean | null
+          fajr_reminder: boolean | null
           id: string
-          isha_reminder: boolean
-          maghrib_reminder: boolean
-          prayer_reminders: boolean
-          ramadan_activities: boolean
-          updated_at: string
+          isha_reminder: boolean | null
+          maghrib_reminder: boolean | null
+          prayer_reminders: boolean | null
+          ramadan_activities: boolean | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
-          asr_reminder?: boolean
-          created_at?: string
+          asr_reminder?: boolean | null
+          created_at?: string | null
           daily_reminder_time?: string | null
-          dhuhr_reminder?: boolean
-          fajr_reminder?: boolean
+          dhuhr_reminder?: boolean | null
+          fajr_reminder?: boolean | null
           id?: string
-          isha_reminder?: boolean
-          maghrib_reminder?: boolean
-          prayer_reminders?: boolean
-          ramadan_activities?: boolean
-          updated_at?: string
+          isha_reminder?: boolean | null
+          maghrib_reminder?: boolean | null
+          prayer_reminders?: boolean | null
+          ramadan_activities?: boolean | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
-          asr_reminder?: boolean
-          created_at?: string
+          asr_reminder?: boolean | null
+          created_at?: string | null
           daily_reminder_time?: string | null
-          dhuhr_reminder?: boolean
-          fajr_reminder?: boolean
+          dhuhr_reminder?: boolean | null
+          fajr_reminder?: boolean | null
           id?: string
-          isha_reminder?: boolean
-          maghrib_reminder?: boolean
-          prayer_reminders?: boolean
-          ramadan_activities?: boolean
-          updated_at?: string
+          isha_reminder?: boolean | null
+          maghrib_reminder?: boolean | null
+          prayer_reminders?: boolean | null
+          ramadan_activities?: boolean | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -822,32 +866,32 @@ export type Database = {
       nourania_lesson_content: {
         Row: {
           content_type: string
-          created_at: string
-          display_order: number
-          file_name: string
+          created_at: string | null
+          display_order: number | null
+          file_name: string | null
           file_url: string
           id: string
-          lesson_id: number
+          lesson_id: string
           uploaded_by: string | null
         }
         Insert: {
-          content_type: string
-          created_at?: string
-          display_order?: number
-          file_name: string
+          content_type?: string
+          created_at?: string | null
+          display_order?: number | null
+          file_name?: string | null
           file_url: string
           id?: string
-          lesson_id: number
+          lesson_id: string
           uploaded_by?: string | null
         }
         Update: {
           content_type?: string
-          created_at?: string
-          display_order?: number
-          file_name?: string
+          created_at?: string | null
+          display_order?: number | null
+          file_name?: string | null
           file_url?: string
           id?: string
-          lesson_id?: number
+          lesson_id?: string
           uploaded_by?: string | null
         }
         Relationships: [
@@ -863,28 +907,40 @@ export type Database = {
       nourania_lessons: {
         Row: {
           audio_url: string | null
-          created_at: string
+          created_at: string | null
           description: string | null
-          id: number
+          display_order: number | null
+          id: string
+          is_locked: boolean | null
           lesson_number: number
+          page_end: number | null
+          page_start: number | null
           title_arabic: string
           title_french: string
         }
         Insert: {
           audio_url?: string | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
-          id?: number
+          display_order?: number | null
+          id?: string
+          is_locked?: boolean | null
           lesson_number: number
+          page_end?: number | null
+          page_start?: number | null
           title_arabic: string
           title_french: string
         }
         Update: {
           audio_url?: string | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
-          id?: number
+          display_order?: number | null
+          id?: string
+          is_locked?: boolean | null
           lesson_number?: number
+          page_end?: number | null
+          page_start?: number | null
           title_arabic?: string
           title_french?: string
         }
@@ -892,30 +948,30 @@ export type Database = {
       }
       nourania_validation_requests: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
-          lesson_id: number
+          lesson_id: string
           reviewed_at: string | null
           reviewed_by: string | null
-          status: string
+          status: string | null
           user_id: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           id?: string
-          lesson_id: number
+          lesson_id: string
           reviewed_at?: string | null
           reviewed_by?: string | null
-          status?: string
+          status?: string | null
           user_id: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           id?: string
-          lesson_id?: number
+          lesson_id?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
-          status?: string
+          status?: string | null
           user_id?: string
         }
         Relationships: [
@@ -930,25 +986,37 @@ export type Database = {
       }
       point_settings: {
         Row: {
+          action_key: string
+          created_at: string | null
           id: string
-          module_key: string
-          module_label: string
-          points_per_validation: number
-          updated_at: string
+          is_active: boolean | null
+          label: string
+          module_key: string | null
+          module_label: string | null
+          points: number
+          points_per_validation: number | null
         }
         Insert: {
+          action_key: string
+          created_at?: string | null
           id?: string
-          module_key: string
-          module_label: string
-          points_per_validation?: number
-          updated_at?: string
+          is_active?: boolean | null
+          label: string
+          module_key?: string | null
+          module_label?: string | null
+          points?: number
+          points_per_validation?: number | null
         }
         Update: {
+          action_key?: string
+          created_at?: string | null
           id?: string
-          module_key?: string
-          module_label?: string
-          points_per_validation?: number
-          updated_at?: string
+          is_active?: boolean | null
+          label?: string
+          module_key?: string | null
+          module_label?: string | null
+          points?: number
+          points_per_validation?: number | null
         }
         Relationships: []
       }
@@ -956,19 +1024,19 @@ export type Database = {
         Row: {
           card_id: string
           content_type: string
-          created_at: string
-          display_order: number
-          file_name: string
+          created_at: string | null
+          display_order: number | null
+          file_name: string | null
           file_url: string
           id: string
           uploaded_by: string | null
         }
         Insert: {
           card_id: string
-          content_type: string
-          created_at?: string
-          display_order?: number
-          file_name: string
+          content_type?: string
+          created_at?: string | null
+          display_order?: number | null
+          file_name?: string | null
           file_url: string
           id?: string
           uploaded_by?: string | null
@@ -976,9 +1044,9 @@ export type Database = {
         Update: {
           card_id?: string
           content_type?: string
-          created_at?: string
-          display_order?: number
-          file_name?: string
+          created_at?: string | null
+          display_order?: number | null
+          file_name?: string | null
           file_url?: string
           id?: string
           uploaded_by?: string | null
@@ -995,106 +1063,117 @@ export type Database = {
       }
       prayer_cards: {
         Row: {
-          created_at: string
-          display_order: number
-          group_key: string
+          category_id: string
+          created_at: string | null
+          display_order: number | null
+          group_key: string | null
           id: string
           image_url: string | null
-          title: string
-          title_arabic: string | null
-          updated_at: string
+          is_locked: boolean | null
+          title: string | null
+          title_arabic: string
+          title_french: string
         }
         Insert: {
-          created_at?: string
-          display_order?: number
-          group_key: string
+          category_id: string
+          created_at?: string | null
+          display_order?: number | null
+          group_key?: string | null
           id?: string
           image_url?: string | null
-          title: string
-          title_arabic?: string | null
-          updated_at?: string
+          is_locked?: boolean | null
+          title?: string | null
+          title_arabic: string
+          title_french: string
         }
         Update: {
-          created_at?: string
-          display_order?: number
-          group_key?: string
+          category_id?: string
+          created_at?: string | null
+          display_order?: number | null
+          group_key?: string | null
           id?: string
           image_url?: string | null
-          title?: string
-          title_arabic?: string | null
-          updated_at?: string
+          is_locked?: boolean | null
+          title?: string | null
+          title_arabic?: string
+          title_french?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "prayer_cards_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "prayer_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       prayer_categories: {
         Row: {
-          created_at: string
-          created_by: string | null
+          color: string | null
+          created_at: string | null
           description: string | null
-          display_order: number
+          display_order: number | null
           icon: string | null
           id: string
-          is_default: boolean
+          is_default: boolean | null
           name_arabic: string
           name_french: string
-          updated_at: string
         }
         Insert: {
-          created_at?: string
-          created_by?: string | null
+          color?: string | null
+          created_at?: string | null
           description?: string | null
-          display_order?: number
+          display_order?: number | null
           icon?: string | null
           id?: string
-          is_default?: boolean
+          is_default?: boolean | null
           name_arabic: string
           name_french: string
-          updated_at?: string
         }
         Update: {
-          created_at?: string
-          created_by?: string | null
+          color?: string | null
+          created_at?: string | null
           description?: string | null
-          display_order?: number
+          display_order?: number | null
           icon?: string | null
           id?: string
-          is_default?: boolean
+          is_default?: boolean | null
           name_arabic?: string
           name_french?: string
-          updated_at?: string
         }
         Relationships: []
       }
       prayer_content: {
         Row: {
-          category_id: string
-          content: string
-          content_type: string
-          created_at: string
-          display_order: number
+          audio_url: string | null
+          category_id: string | null
+          created_at: string | null
+          display_order: number | null
           id: string
-          title: string
-          updated_at: string
+          text_arabic: string | null
+          text_french: string | null
+          title: string | null
         }
         Insert: {
-          category_id: string
-          content: string
-          content_type: string
-          created_at?: string
-          display_order?: number
+          audio_url?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          display_order?: number | null
           id?: string
-          title: string
-          updated_at?: string
+          text_arabic?: string | null
+          text_french?: string | null
+          title?: string | null
         }
         Update: {
-          category_id?: string
-          content?: string
-          content_type?: string
-          created_at?: string
-          display_order?: number
+          audio_url?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          display_order?: number | null
           id?: string
-          title?: string
-          updated_at?: string
+          text_arabic?: string | null
+          text_french?: string | null
+          title?: string | null
         }
         Relationships: [
           {
@@ -1110,118 +1189,121 @@ export type Database = {
         Row: {
           age: number | null
           avatar_url: string | null
-          created_at: string
+          city: string | null
+          created_at: string | null
           date_of_birth: string | null
-          dob_set_by_user: boolean
+          dob_set_by_user: boolean | null
           email: string | null
           full_name: string | null
           gender: string | null
           id: string
-          is_approved: boolean
-          last_seen: string | null
-          notification_prompt_dismissed: string | null
-          notification_prompt_later_at: string | null
-          notification_prompt_later_count: number | null
-          prayer_group: string | null
-          updated_at: string
+          is_admin: boolean | null
+          is_approved: boolean | null
+          notification_prompt_dismissed: boolean | null
+          phone: string | null
+          points: number | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           age?: number | null
           avatar_url?: string | null
-          created_at?: string
+          city?: string | null
+          created_at?: string | null
           date_of_birth?: string | null
-          dob_set_by_user?: boolean
+          dob_set_by_user?: boolean | null
           email?: string | null
           full_name?: string | null
           gender?: string | null
           id?: string
-          is_approved?: boolean
-          last_seen?: string | null
-          notification_prompt_dismissed?: string | null
-          notification_prompt_later_at?: string | null
-          notification_prompt_later_count?: number | null
-          prayer_group?: string | null
-          updated_at?: string
+          is_admin?: boolean | null
+          is_approved?: boolean | null
+          notification_prompt_dismissed?: boolean | null
+          phone?: string | null
+          points?: number | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           age?: number | null
           avatar_url?: string | null
-          created_at?: string
+          city?: string | null
+          created_at?: string | null
           date_of_birth?: string | null
-          dob_set_by_user?: boolean
+          dob_set_by_user?: boolean | null
           email?: string | null
           full_name?: string | null
           gender?: string | null
           id?: string
-          is_approved?: boolean
-          last_seen?: string | null
-          notification_prompt_dismissed?: string | null
-          notification_prompt_later_at?: string | null
-          notification_prompt_later_count?: number | null
-          prayer_group?: string | null
-          updated_at?: string
+          is_admin?: boolean | null
+          is_approved?: boolean | null
+          notification_prompt_dismissed?: boolean | null
+          phone?: string | null
+          points?: number | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
       }
       push_subscriptions: {
         Row: {
-          auth: string
-          created_at: string
+          auth_key: string
+          created_at: string | null
+          device_info: string | null
           endpoint: string
           id: string
+          is_active: boolean | null
           p256dh: string
-          updated_at: string
           user_id: string
         }
         Insert: {
-          auth: string
-          created_at?: string
+          auth_key: string
+          created_at?: string | null
+          device_info?: string | null
           endpoint: string
           id?: string
+          is_active?: boolean | null
           p256dh: string
-          updated_at?: string
           user_id: string
         }
         Update: {
-          auth?: string
-          created_at?: string
+          auth_key?: string
+          created_at?: string | null
+          device_info?: string | null
           endpoint?: string
           id?: string
+          is_active?: boolean | null
           p256dh?: string
-          updated_at?: string
           user_id?: string
         }
         Relationships: []
       }
       quiz_responses: {
         Row: {
-          attempt_number: number
-          created_at: string
+          attempt_number: number | null
+          created_at: string | null
           id: string
-          is_correct: boolean
+          is_correct: boolean | null
           quiz_id: string
-          selected_option: number
+          selected_answer: string
           user_id: string
         }
         Insert: {
-          attempt_number?: number
-          created_at?: string
+          attempt_number?: number | null
+          created_at?: string | null
           id?: string
-          is_correct?: boolean
+          is_correct?: boolean | null
           quiz_id: string
-          selected_option: number
+          selected_answer: string
           user_id: string
         }
         Update: {
-          attempt_number?: number
-          created_at?: string
+          attempt_number?: number | null
+          created_at?: string | null
           id?: string
-          is_correct?: boolean
+          is_correct?: boolean | null
           quiz_id?: string
-          selected_option?: number
+          selected_answer?: string
           user_id?: string
         }
         Relationships: [
@@ -1236,34 +1318,46 @@ export type Database = {
       }
       ramadan_day_activities: {
         Row: {
-          created_at: string
-          day_id: number
-          file_name: string
+          activity_type: string
+          created_at: string | null
+          day_id: string
+          description: string | null
+          display_order: number | null
+          file_name: string | null
           file_type: string | null
-          file_url: string
+          file_url: string | null
           id: string
           order_index: number | null
-          type: string
+          title: string | null
+          type: string | null
         }
         Insert: {
-          created_at?: string
-          day_id: number
-          file_name: string
+          activity_type: string
+          created_at?: string | null
+          day_id: string
+          description?: string | null
+          display_order?: number | null
+          file_name?: string | null
           file_type?: string | null
-          file_url: string
+          file_url?: string | null
           id?: string
           order_index?: number | null
-          type: string
+          title?: string | null
+          type?: string | null
         }
         Update: {
-          created_at?: string
-          day_id?: number
-          file_name?: string
+          activity_type?: string
+          created_at?: string | null
+          day_id?: string
+          description?: string | null
+          display_order?: number | null
+          file_name?: string | null
           file_type?: string | null
-          file_url?: string
+          file_url?: string | null
           id?: string
           order_index?: number | null
-          type?: string
+          title?: string | null
+          type?: string | null
         }
         Relationships: [
           {
@@ -1278,23 +1372,26 @@ export type Database = {
       ramadan_day_exceptions: {
         Row: {
           created_at: string | null
-          day_id: number
+          day_id: string
           id: string
           is_unlocked: boolean | null
+          unlocked_by: string | null
           user_id: string
         }
         Insert: {
           created_at?: string | null
-          day_id: number
+          day_id: string
           id?: string
           is_unlocked?: boolean | null
+          unlocked_by?: string | null
           user_id: string
         }
         Update: {
           created_at?: string | null
-          day_id?: number
+          day_id?: string
           id?: string
           is_unlocked?: boolean | null
+          unlocked_by?: string | null
           user_id?: string
         }
         Relationships: [
@@ -1309,27 +1406,30 @@ export type Database = {
       }
       ramadan_day_videos: {
         Row: {
-          created_at: string
-          day_id: number
-          display_order: number
+          created_at: string | null
+          day_id: string
+          display_order: number | null
           file_name: string | null
           id: string
+          title: string | null
           video_url: string
         }
         Insert: {
-          created_at?: string
-          day_id: number
-          display_order?: number
+          created_at?: string | null
+          day_id: string
+          display_order?: number | null
           file_name?: string | null
           id?: string
+          title?: string | null
           video_url: string
         }
         Update: {
-          created_at?: string
-          day_id?: number
-          display_order?: number
+          created_at?: string | null
+          day_id?: string
+          display_order?: number | null
           file_name?: string | null
           id?: string
+          title?: string | null
           video_url?: string
         }
         Relationships: [
@@ -1344,70 +1444,85 @@ export type Database = {
       }
       ramadan_days: {
         Row: {
-          created_at: string
+          created_at: string | null
           day_number: number
-          id: number
-          is_unlocked: boolean | null
+          id: string
+          is_locked: boolean | null
           pdf_url: string | null
           theme: string | null
-          updated_at: string
           video_url: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           day_number: number
-          id?: number
-          is_unlocked?: boolean | null
+          id?: string
+          is_locked?: boolean | null
           pdf_url?: string | null
           theme?: string | null
-          updated_at?: string
           video_url?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           day_number?: number
-          id?: number
-          is_unlocked?: boolean | null
+          id?: string
+          is_locked?: boolean | null
           pdf_url?: string | null
           theme?: string | null
-          updated_at?: string
           video_url?: string | null
         }
         Relationships: []
       }
       ramadan_quizzes: {
         Row: {
+          correct_answer: string
           correct_option: number | null
-          correct_options: number[] | null
-          created_at: string
-          day_id: number
+          correct_options: Json | null
+          created_at: string | null
+          day_id: string
+          display_order: number | null
           explanation: string | null
           id: string
-          options: Json
+          option_a: string
+          option_b: string
+          option_c: string | null
+          option_d: string | null
+          options: Json | null
           question: string
-          question_order: number
+          question_order: number | null
         }
         Insert: {
+          correct_answer: string
           correct_option?: number | null
-          correct_options?: number[] | null
-          created_at?: string
-          day_id: number
+          correct_options?: Json | null
+          created_at?: string | null
+          day_id: string
+          display_order?: number | null
           explanation?: string | null
           id?: string
-          options?: Json
+          option_a: string
+          option_b: string
+          option_c?: string | null
+          option_d?: string | null
+          options?: Json | null
           question: string
-          question_order?: number
+          question_order?: number | null
         }
         Update: {
+          correct_answer?: string
           correct_option?: number | null
-          correct_options?: number[] | null
-          created_at?: string
-          day_id?: number
+          correct_options?: Json | null
+          created_at?: string | null
+          day_id?: string
+          display_order?: number | null
           explanation?: string | null
           id?: string
-          options?: Json
+          option_a?: string
+          option_b?: string
+          option_c?: string | null
+          option_d?: string | null
+          options?: Json | null
           question?: string
-          question_order?: number
+          question_order?: number | null
         }
         Relationships: [
           {
@@ -1421,92 +1536,122 @@ export type Database = {
       }
       ramadan_settings: {
         Row: {
+          auto_unlock: boolean | null
+          created_at: string | null
+          end_date: string | null
           id: string
-          max_errors: number
-          start_enabled: boolean
+          is_active: boolean | null
+          start_date: string | null
+          start_enabled: boolean | null
           started_at: string | null
-          updated_at: string
-          updated_by: string | null
+          updated_at: string | null
         }
         Insert: {
+          auto_unlock?: boolean | null
+          created_at?: string | null
+          end_date?: string | null
           id?: string
-          max_errors?: number
-          start_enabled?: boolean
+          is_active?: boolean | null
+          start_date?: string | null
+          start_enabled?: boolean | null
           started_at?: string | null
-          updated_at?: string
-          updated_by?: string | null
+          updated_at?: string | null
         }
         Update: {
+          auto_unlock?: boolean | null
+          created_at?: string | null
+          end_date?: string | null
           id?: string
-          max_errors?: number
-          start_enabled?: boolean
+          is_active?: boolean | null
+          start_date?: string | null
+          start_enabled?: boolean | null
           started_at?: string | null
-          updated_at?: string
-          updated_by?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
       scheduled_notifications: {
         Row: {
-          created_at: string
+          body: string | null
+          created_at: string | null
           created_by: string | null
-          end_date: string
+          end_date: string | null
           id: string
-          is_active: boolean
-          message: string
-          module: string
-          recipients: Json
-          require_confirmation: boolean
-          send_time: string
-          start_date: string
+          is_active: boolean | null
+          is_sent: boolean | null
+          message: string | null
+          module: string | null
+          recipients: Json | null
+          require_confirmation: boolean | null
+          scheduled_at: string | null
+          send_time: string | null
+          sent_at: string | null
+          start_date: string | null
+          target_type: string | null
+          target_user_id: string | null
+          title: string | null
         }
         Insert: {
-          created_at?: string
+          body?: string | null
+          created_at?: string | null
           created_by?: string | null
-          end_date: string
+          end_date?: string | null
           id?: string
-          is_active?: boolean
-          message: string
-          module?: string
-          recipients?: Json
-          require_confirmation?: boolean
-          send_time?: string
-          start_date: string
+          is_active?: boolean | null
+          is_sent?: boolean | null
+          message?: string | null
+          module?: string | null
+          recipients?: Json | null
+          require_confirmation?: boolean | null
+          scheduled_at?: string | null
+          send_time?: string | null
+          sent_at?: string | null
+          start_date?: string | null
+          target_type?: string | null
+          target_user_id?: string | null
+          title?: string | null
         }
         Update: {
-          created_at?: string
+          body?: string | null
+          created_at?: string | null
           created_by?: string | null
-          end_date?: string
+          end_date?: string | null
           id?: string
-          is_active?: boolean
-          message?: string
-          module?: string
-          recipients?: Json
-          require_confirmation?: boolean
-          send_time?: string
-          start_date?: string
+          is_active?: boolean | null
+          is_sent?: boolean | null
+          message?: string | null
+          module?: string | null
+          recipients?: Json | null
+          require_confirmation?: boolean | null
+          scheduled_at?: string | null
+          send_time?: string | null
+          sent_at?: string | null
+          start_date?: string | null
+          target_type?: string | null
+          target_user_id?: string | null
+          title?: string | null
         }
         Relationships: []
       }
       sourate_admin_unlocks: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
-          sourate_id: number
+          sourate_id: string
           unlocked_by: string | null
           user_id: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           id?: string
-          sourate_id: number
+          sourate_id: string
           unlocked_by?: string | null
           user_id: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           id?: string
-          sourate_id?: number
+          sourate_id?: string
           unlocked_by?: string | null
           user_id?: string
         }
@@ -1523,32 +1668,32 @@ export type Database = {
       sourate_content: {
         Row: {
           content_type: string
-          created_at: string
-          display_order: number
-          file_name: string
+          created_at: string | null
+          display_order: number | null
+          file_name: string | null
           file_url: string
           id: string
-          sourate_id: number
+          sourate_id: string
           uploaded_by: string | null
         }
         Insert: {
-          content_type: string
-          created_at?: string
-          display_order?: number
-          file_name: string
+          content_type?: string
+          created_at?: string | null
+          display_order?: number | null
+          file_name?: string | null
           file_url: string
           id?: string
-          sourate_id: number
+          sourate_id: string
           uploaded_by?: string | null
         }
         Update: {
           content_type?: string
-          created_at?: string
-          display_order?: number
-          file_name?: string
+          created_at?: string | null
+          display_order?: number | null
+          file_name?: string | null
           file_url?: string
           id?: string
-          sourate_id?: number
+          sourate_id?: string
           uploaded_by?: string | null
         }
         Relationships: [
@@ -1563,30 +1708,30 @@ export type Database = {
       }
       sourate_validation_requests: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
           reviewed_at: string | null
           reviewed_by: string | null
-          sourate_id: number
-          status: string
+          sourate_id: string
+          status: string | null
           user_id: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
-          sourate_id: number
-          status?: string
+          sourate_id: string
+          status?: string | null
           user_id: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           reviewed_at?: string | null
           reviewed_by?: string | null
-          sourate_id?: number
-          status?: string
+          sourate_id?: string
+          status?: string | null
           user_id?: string
         }
         Relationships: [
@@ -1602,51 +1747,54 @@ export type Database = {
       sourates: {
         Row: {
           audio_url: string | null
-          created_at: string
-          id: number
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_locked: boolean | null
           name_arabic: string
           name_french: string
           number: number
-          revelation_type: string | null
-          verses_count: number
+          verses_count: number | null
         }
         Insert: {
           audio_url?: string | null
-          created_at?: string
-          id?: number
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_locked?: boolean | null
           name_arabic: string
           name_french: string
           number: number
-          revelation_type?: string | null
-          verses_count?: number
+          verses_count?: number | null
         }
         Update: {
           audio_url?: string | null
-          created_at?: string
-          id?: number
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_locked?: boolean | null
           name_arabic?: string
           name_french?: string
           number?: number
-          revelation_type?: string | null
-          verses_count?: number
+          verses_count?: number | null
         }
         Relationships: []
       }
       student_group_members: {
         Row: {
-          created_at: string
+          created_at: string | null
           group_id: string
           id: string
           user_id: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           group_id: string
           id?: string
           user_id: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           group_id?: string
           id?: string
           user_id?: string
@@ -1663,99 +1811,87 @@ export type Database = {
       }
       student_groups: {
         Row: {
-          color: string
-          created_at: string
-          display_order: number
+          created_at: string | null
+          created_by: string | null
+          description: string | null
           id: string
           name: string
-          position: number | null
-          updated_at: string
         }
         Insert: {
-          color?: string
-          created_at?: string
-          display_order?: number
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
           id?: string
           name: string
-          position?: number | null
-          updated_at?: string
         }
         Update: {
-          color?: string
-          created_at?: string
-          display_order?: number
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
           id?: string
           name?: string
-          position?: number | null
-          updated_at?: string
         }
         Relationships: []
       }
       student_ranking: {
         Row: {
-          alphabet_points: number
+          created_at: string | null
           id: string
-          invocations_points: number
-          nourania_points: number
-          prayer_points: number
-          ramadan_points: number
-          sourates_points: number
-          total_points: number
-          updated_at: string
+          month_points: number | null
+          rank_position: number | null
+          total_points: number | null
+          updated_at: string | null
           user_id: string
+          week_points: number | null
         }
         Insert: {
-          alphabet_points?: number
+          created_at?: string | null
           id?: string
-          invocations_points?: number
-          nourania_points?: number
-          prayer_points?: number
-          ramadan_points?: number
-          sourates_points?: number
-          total_points?: number
-          updated_at?: string
+          month_points?: number | null
+          rank_position?: number | null
+          total_points?: number | null
+          updated_at?: string | null
           user_id: string
+          week_points?: number | null
         }
         Update: {
-          alphabet_points?: number
+          created_at?: string | null
           id?: string
-          invocations_points?: number
-          nourania_points?: number
-          prayer_points?: number
-          ramadan_points?: number
-          sourates_points?: number
-          total_points?: number
-          updated_at?: string
+          month_points?: number | null
+          rank_position?: number | null
+          total_points?: number | null
+          updated_at?: string | null
           user_id?: string
+          week_points?: number | null
         }
         Relationships: []
       }
       user_alphabet_progress: {
         Row: {
-          created_at: string
+          completed_at: string | null
+          created_at: string | null
           id: string
-          is_validated: boolean
+          is_completed: boolean | null
+          is_validated: boolean | null
           letter_id: number
-          quiz_score: number | null
-          updated_at: string
           user_id: string
         }
         Insert: {
-          created_at?: string
+          completed_at?: string | null
+          created_at?: string | null
           id?: string
-          is_validated?: boolean
+          is_completed?: boolean | null
+          is_validated?: boolean | null
           letter_id: number
-          quiz_score?: number | null
-          updated_at?: string
           user_id: string
         }
         Update: {
-          created_at?: string
+          completed_at?: string | null
+          created_at?: string | null
           id?: string
-          is_validated?: boolean
+          is_completed?: boolean | null
+          is_validated?: boolean | null
           letter_id?: number
-          quiz_score?: number | null
-          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -1770,60 +1906,72 @@ export type Database = {
       }
       user_daily_prayers: {
         Row: {
-          created_at: string
+          asr: boolean | null
+          created_at: string | null
           date: string
+          dhuhr: boolean | null
+          fajr: boolean | null
           id: string
-          is_checked: boolean
-          prayer_name: string
-          updated_at: string
+          isha: boolean | null
+          maghrib: boolean | null
           user_id: string
         }
         Insert: {
-          created_at?: string
-          date: string
+          asr?: boolean | null
+          created_at?: string | null
+          date?: string
+          dhuhr?: boolean | null
+          fajr?: boolean | null
           id?: string
-          is_checked?: boolean
-          prayer_name: string
-          updated_at?: string
+          isha?: boolean | null
+          maghrib?: boolean | null
           user_id: string
         }
         Update: {
-          created_at?: string
+          asr?: boolean | null
+          created_at?: string | null
           date?: string
+          dhuhr?: boolean | null
+          fajr?: boolean | null
           id?: string
-          is_checked?: boolean
-          prayer_name?: string
-          updated_at?: string
+          isha?: boolean | null
+          maghrib?: boolean | null
           user_id?: string
         }
         Relationships: []
       }
       user_invocation_progress: {
         Row: {
-          created_at: string
+          completed_at: string | null
+          created_at: string | null
           id: string
           invocation_id: number
-          is_memorized: boolean
-          is_validated: boolean
-          updated_at: string
+          is_completed: boolean | null
+          is_memorized: boolean | null
+          is_validated: boolean | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
-          created_at?: string
+          completed_at?: string | null
+          created_at?: string | null
           id?: string
           invocation_id: number
-          is_memorized?: boolean
-          is_validated?: boolean
-          updated_at?: string
+          is_completed?: boolean | null
+          is_memorized?: boolean | null
+          is_validated?: boolean | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
-          created_at?: string
+          completed_at?: string | null
+          created_at?: string | null
           id?: string
           invocation_id?: number
-          is_memorized?: boolean
-          is_validated?: boolean
-          updated_at?: string
+          is_completed?: boolean | null
+          is_memorized?: boolean | null
+          is_validated?: boolean | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -1839,82 +1987,83 @@ export type Database = {
       user_messages: {
         Row: {
           audio_url: string | null
+          content: string | null
           conversation_id: string | null
-          created_at: string
+          created_at: string | null
           deleted_at: string | null
           id: string
-          is_read: boolean
-          message: string
-          message_type: string
-          parent_message_id: string | null
-          sender_type: string
-          updated_at: string
-          user_id: string
+          is_read: boolean | null
+          message: string | null
+          message_type: string | null
+          read_at: string | null
+          receiver_id: string | null
+          sender_id: string | null
+          sender_type: string | null
+          user_id: string | null
         }
         Insert: {
           audio_url?: string | null
+          content?: string | null
           conversation_id?: string | null
-          created_at?: string
+          created_at?: string | null
           deleted_at?: string | null
           id?: string
-          is_read?: boolean
-          message: string
-          message_type?: string
-          parent_message_id?: string | null
-          sender_type?: string
-          updated_at?: string
-          user_id: string
+          is_read?: boolean | null
+          message?: string | null
+          message_type?: string | null
+          read_at?: string | null
+          receiver_id?: string | null
+          sender_id?: string | null
+          sender_type?: string | null
+          user_id?: string | null
         }
         Update: {
           audio_url?: string | null
+          content?: string | null
           conversation_id?: string | null
-          created_at?: string
+          created_at?: string | null
           deleted_at?: string | null
           id?: string
-          is_read?: boolean
-          message?: string
-          message_type?: string
-          parent_message_id?: string | null
-          sender_type?: string
-          updated_at?: string
-          user_id?: string
+          is_read?: boolean | null
+          message?: string | null
+          message_type?: string | null
+          read_at?: string | null
+          receiver_id?: string | null
+          sender_id?: string | null
+          sender_type?: string | null
+          user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_messages_parent_message_id_fkey"
-            columns: ["parent_message_id"]
-            isOneToOne: false
-            referencedRelation: "user_messages"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_nourania_progress: {
         Row: {
-          created_at: string
+          completed_at: string | null
+          created_at: string | null
           id: string
-          is_memorized: boolean
-          is_validated: boolean
-          lesson_id: number
-          updated_at: string
+          is_completed: boolean | null
+          is_validated: boolean | null
+          lesson_id: string
+          progress_percentage: number | null
           user_id: string
         }
         Insert: {
-          created_at?: string
+          completed_at?: string | null
+          created_at?: string | null
           id?: string
-          is_memorized?: boolean
-          is_validated?: boolean
-          lesson_id: number
-          updated_at?: string
+          is_completed?: boolean | null
+          is_validated?: boolean | null
+          lesson_id: string
+          progress_percentage?: number | null
           user_id: string
         }
         Update: {
-          created_at?: string
+          completed_at?: string | null
+          created_at?: string | null
           id?: string
-          is_memorized?: boolean
-          is_validated?: boolean
-          lesson_id?: number
-          updated_at?: string
+          is_completed?: boolean | null
+          is_validated?: boolean | null
+          lesson_id?: string
+          progress_percentage?: number | null
           user_id?: string
         }
         Relationships: [
@@ -1929,96 +2078,108 @@ export type Database = {
       }
       user_prayer_progress: {
         Row: {
-          category_id: string
-          created_at: string
+          card_id: string
+          completed_at: string | null
+          created_at: string | null
           id: string
-          is_validated: boolean
-          updated_at: string
+          is_completed: boolean | null
+          is_validated: boolean | null
           user_id: string
         }
         Insert: {
-          category_id: string
-          created_at?: string
+          card_id: string
+          completed_at?: string | null
+          created_at?: string | null
           id?: string
-          is_validated?: boolean
-          updated_at?: string
+          is_completed?: boolean | null
+          is_validated?: boolean | null
           user_id: string
         }
         Update: {
-          category_id?: string
-          created_at?: string
+          card_id?: string
+          completed_at?: string | null
+          created_at?: string | null
           id?: string
-          is_validated?: boolean
-          updated_at?: string
+          is_completed?: boolean | null
+          is_validated?: boolean | null
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "user_prayer_progress_category_id_fkey"
-            columns: ["category_id"]
+            foreignKeyName: "user_prayer_progress_card_id_fkey"
+            columns: ["card_id"]
             isOneToOne: false
-            referencedRelation: "prayer_categories"
+            referencedRelation: "prayer_cards"
             referencedColumns: ["id"]
           },
         ]
       }
       user_ramadan_fasting: {
         Row: {
-          created_at: string
-          day_number: number
-          has_fasted: boolean
+          created_at: string | null
+          date: string
+          day_number: number | null
+          has_fasted: boolean | null
           id: string
-          updated_at: string
+          is_fasting: boolean | null
           user_id: string
         }
         Insert: {
-          created_at?: string
-          day_number: number
-          has_fasted?: boolean
+          created_at?: string | null
+          date: string
+          day_number?: number | null
+          has_fasted?: boolean | null
           id?: string
-          updated_at?: string
+          is_fasting?: boolean | null
           user_id: string
         }
         Update: {
-          created_at?: string
-          day_number?: number
-          has_fasted?: boolean
+          created_at?: string | null
+          date?: string
+          day_number?: number | null
+          has_fasted?: boolean | null
           id?: string
-          updated_at?: string
+          is_fasting?: boolean | null
           user_id?: string
         }
         Relationships: []
       }
       user_ramadan_progress: {
         Row: {
-          created_at: string
-          day_id: number
+          completed_at: string | null
+          created_at: string | null
+          day_id: string
           id: string
-          pdf_read: boolean
-          quiz_completed: boolean
-          updated_at: string
+          is_completed: boolean | null
+          pdf_read: boolean | null
+          quiz_completed: boolean | null
+          quiz_score: number | null
           user_id: string
-          video_watched: boolean
+          video_watched: boolean | null
         }
         Insert: {
-          created_at?: string
-          day_id: number
+          completed_at?: string | null
+          created_at?: string | null
+          day_id: string
           id?: string
-          pdf_read?: boolean
-          quiz_completed?: boolean
-          updated_at?: string
+          is_completed?: boolean | null
+          pdf_read?: boolean | null
+          quiz_completed?: boolean | null
+          quiz_score?: number | null
           user_id: string
-          video_watched?: boolean
+          video_watched?: boolean | null
         }
         Update: {
-          created_at?: string
-          day_id?: number
+          completed_at?: string | null
+          created_at?: string | null
+          day_id?: string
           id?: string
-          pdf_read?: boolean
-          quiz_completed?: boolean
-          updated_at?: string
+          is_completed?: boolean | null
+          pdf_read?: boolean | null
+          quiz_completed?: boolean | null
+          quiz_score?: number | null
           user_id?: string
-          video_watched?: boolean
+          video_watched?: boolean | null
         }
         Relationships: [
           {
@@ -2032,48 +2193,51 @@ export type Database = {
       }
       user_ramadan_video_watched: {
         Row: {
-          day_id: number
+          created_at: string | null
           id: string
           user_id: string
           video_id: string
-          watched_at: string
+          watched_at: string | null
         }
         Insert: {
-          day_id: number
+          created_at?: string | null
           id?: string
           user_id: string
           video_id: string
-          watched_at?: string
+          watched_at?: string | null
         }
         Update: {
-          day_id?: number
+          created_at?: string | null
           id?: string
           user_id?: string
           video_id?: string
-          watched_at?: string
+          watched_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "user_ramadan_video_watched_day_id_fkey"
-            columns: ["day_id"]
+            foreignKeyName: "user_ramadan_video_watched_video_id_fkey"
+            columns: ["video_id"]
             isOneToOne: false
-            referencedRelation: "ramadan_days"
+            referencedRelation: "ramadan_day_videos"
             referencedColumns: ["id"]
           },
         ]
       }
       user_roles: {
         Row: {
+          created_at: string | null
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
+          created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
+          created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
@@ -2082,37 +2246,31 @@ export type Database = {
       }
       user_sourate_progress: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
-          is_memorized: boolean
-          is_validated: boolean
-          last_practiced_at: string | null
-          progress_percentage: number
-          sourate_id: number
-          updated_at: string
+          is_validated: boolean | null
+          progress_percentage: number | null
+          sourate_id: string
           user_id: string
+          validated_at: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           id?: string
-          is_memorized?: boolean
-          is_validated?: boolean
-          last_practiced_at?: string | null
-          progress_percentage?: number
-          sourate_id: number
-          updated_at?: string
+          is_validated?: boolean | null
+          progress_percentage?: number | null
+          sourate_id: string
           user_id: string
+          validated_at?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           id?: string
-          is_memorized?: boolean
-          is_validated?: boolean
-          last_practiced_at?: string | null
-          progress_percentage?: number
-          sourate_id?: number
-          updated_at?: string
+          is_validated?: boolean | null
+          progress_percentage?: number | null
+          sourate_id?: string
           user_id?: string
+          validated_at?: string | null
         }
         Relationships: [
           {
@@ -2126,29 +2284,26 @@ export type Database = {
       }
       user_sourate_verse_progress: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
-          is_validated: boolean
-          sourate_id: number
-          updated_at: string
+          is_memorized: boolean | null
+          sourate_id: string
           user_id: string
           verse_number: number
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           id?: string
-          is_validated?: boolean
-          sourate_id: number
-          updated_at?: string
+          is_memorized?: boolean | null
+          sourate_id: string
           user_id: string
           verse_number: number
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           id?: string
-          is_validated?: boolean
-          sourate_id?: number
-          updated_at?: string
+          is_memorized?: boolean | null
+          sourate_id?: string
           user_id?: string
           verse_number?: number
         }
@@ -2180,7 +2335,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2308,7 +2463,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "moderator", "user"],
     },
   },
 } as const
