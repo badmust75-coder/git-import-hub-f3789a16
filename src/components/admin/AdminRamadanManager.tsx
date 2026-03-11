@@ -581,7 +581,7 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
 
   // Toggle is_unlocked on a day (global unlock)
   const toggleDayUnlockMutation = useMutation({
-    mutationFn: async ({ dayId, isUnlocked }: { dayId: number; isUnlocked: boolean }) => {
+    mutationFn: async ({ dayId, isUnlocked }: { dayId: string; isUnlocked: boolean }) => {
       const { error } = await (supabase as any).from('ramadan_days').update({ is_unlocked: isUnlocked }).eq('id', dayId);
       if (error) throw error;
     },
