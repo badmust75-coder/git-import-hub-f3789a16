@@ -707,7 +707,7 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
     e.target.value = '';
   };
 
-  const handleOpenDay = (dayId: number, section?: 'video' | 'quiz') => {
+  const handleOpenDay = (dayId: string, section?: 'video' | 'quiz') => {
     setSelectedDay(dayId);
     setScrollToSection(section || null);
     const day = days.find(d => d.id === dayId);
