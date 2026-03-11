@@ -45,7 +45,7 @@ interface AdminRamadanManagerProps {
 
 interface Quiz {
   id: string;
-  day_id: number;
+  day_id: string;
   question: string;
   options: string[];
   correct_option: number | null;
@@ -55,7 +55,7 @@ interface Quiz {
 
 interface DayVideo {
   id: string;
-  day_id: number;
+  day_id: string;
   video_url: string;
   file_name: string | null;
   display_order: number;
