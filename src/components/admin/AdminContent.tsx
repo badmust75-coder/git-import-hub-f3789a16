@@ -87,7 +87,7 @@ const AdminContent = () => {
           pdf_url: item.data.pdf_url as string,
           theme: item.data.theme as string,
         })
-        .eq('id', item.id as number);
+        .eq('id', String(item.id));
       if (error) throw error;
     },
     onSuccess: () => {
