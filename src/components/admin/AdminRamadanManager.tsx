@@ -421,7 +421,7 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
 
   // Save quiz questions (unlimited, with explanation and order) — no duplicates
   const saveQuizzesMutation = useMutation({
-    mutationFn: async ({ dayId, questionForms }: { dayId: number; questionForms: QuestionForm[] }) => {
+    mutationFn: async ({ dayId, questionForms }: { dayId: string; questionForms: QuestionForm[] }) => {
       // Fetch all existing questions for this day to detect duplicates
       const { data: existingQuizzes } = await supabase
         .from('ramadan_quizzes')
