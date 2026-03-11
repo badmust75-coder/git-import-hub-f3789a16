@@ -45,8 +45,8 @@ interface SouratePathViewProps {
     verses_count: number;
     revelation_type: string;
   }>;
-  dbSourates: Map<number, number>;
-  sourateProgress: Map<number, { is_validated: boolean; is_memorized: boolean; progress_percentage: number }>;
+  dbSourates: Map<number, string>;
+  sourateProgress: Map<string, { is_validated: boolean; is_memorized: boolean; progress_percentage: number }>;
   isSourateAccessible: (num: number) => boolean;
   onSourateClick: (sourate: any) => void;
 }

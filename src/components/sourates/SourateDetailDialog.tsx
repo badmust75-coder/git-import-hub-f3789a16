@@ -17,11 +17,11 @@ interface SourateDetailDialogProps {
     verses_count: number;
     revelation_type: string;
   };
-  dbId: number | undefined;
+  dbId: string | undefined;
   verseProgress: Map<string, boolean>;
   sourateProgress: { is_validated: boolean; is_memorized: boolean; progress_percentage: number } | undefined;
   contents: any[];
-  onVerseToggle: (dbId: number, verseNum: number, sourateNumber: number, versesCount: number) => void;
+  onVerseToggle: (dbId: string, verseNum: number, sourateNumber: number, versesCount: number) => void;
 }
 
 const SourateDetailDialog = ({
