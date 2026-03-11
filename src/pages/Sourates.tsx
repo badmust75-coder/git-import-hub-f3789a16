@@ -140,12 +140,12 @@ const SouratesPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSourate, setSelectedSourate] = useState<typeof SOURATES_DATA[0] | null>(null);
-  const [sourateProgress, setSourateProgress] = useState<Map<number, { is_validated: boolean; is_memorized: boolean; progress_percentage: number }>>(new Map());
+  const [sourateProgress, setSourateProgress] = useState<Map<string, { is_validated: boolean; is_memorized: boolean; progress_percentage: number }>>(new Map());
   const [verseProgress, setVerseProgress] = useState<Map<string, boolean>>(new Map());
-  const [adminUnlocks, setAdminUnlocks] = useState<Set<number>>(new Set());
+  const [adminUnlocks, setAdminUnlocks] = useState<Set<string>>(new Set());
   const [sourateContents, setSourateContents] = useState<any[]>([]);
   const [unlockDialog, setUnlockDialog] = useState<{ open: boolean; sourateName: string; sourateNumber: number }>({ open: false, sourateName: '', sourateNumber: 0 });
-  const [dbSourates, setDbSourates] = useState<Map<number, number>>(new Map());
+  const [dbSourates, setDbSourates] = useState<Map<number, string>>(new Map());
 
   const loadAll = useCallback(async () => {
     if (!user) return;

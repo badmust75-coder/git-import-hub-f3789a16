@@ -101,7 +101,7 @@ const SortableCard = ({ id, children }: { id: string; children: React.ReactNode 
 };
 
 const Admin = () => {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin, loading, user } = useAuth();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
