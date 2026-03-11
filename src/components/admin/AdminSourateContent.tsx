@@ -52,7 +52,7 @@ const AdminSourateContent = () => {
     },
   });
 
-  const uploadToStorage = useCallback(async (sourateId: number, file: File, contentType: string) => {
+  const uploadToStorage = useCallback(async (sourateId: string, file: File, contentType: string) => {
     if (!user?.id) { toast.error('Vous devez être connecté'); return; }
     setIsUploading(true);
     try {
