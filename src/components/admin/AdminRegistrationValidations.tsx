@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,23 +19,23 @@ interface RegistrationUser {
 
 const AdminRegistrationValidations = ({ onBack }: { onBack: () => void }) => {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [registrations, setRegistrations] = useState<RegistrationUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; userId: string; name: string }>({ open: false, userId: '', name: '' });
 
-  const { data: allUsers, isLoading } = useQuery({
-    queryKey: ['admin-all-registrations'],
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await (supabase as any)
         .from('profiles')
         .select('*')
         .eq('is_approved', false)
         .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return (data || []) as RegistrationUser[];
-    },
-  });
+      setRegistrations(data || []);
+      setIsLoading(false);
+    };
+    load();
+  }, []);
 
   const handleApprove = async (userId: string) => {
     setProcessingId(userId);
@@ -51,20 +50,12 @@ const AdminRegistrationValidations = ({ onBack }: { onBack: () => void }) => {
         .insert({ user_id: userId, role: 'student' })
         .select();
 
-      // Optimistic: remove user from list immediately
-      queryClient.setQueryData(['admin-all-registrations'], (old: RegistrationUser[] | undefined) =>
-        (old || []).filter(u => u.user_id !== userId)
-      );
+      setRegistrations(prev => prev.filter(r => r.user_id !== userId));
 
       toast({
         title: 'Inscription approuvée ✅',
         description: "L'élève peut maintenant accéder à l'application.",
       });
-
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['admin-all-registrations'] }),
-        queryClient.invalidateQueries({ queryKey: ['admin-pending-registrations-count'] }),
-      ]);
     } catch (err: any) {
       console.error('Erreur approbation:', err);
       toast({
@@ -108,8 +99,7 @@ const AdminRegistrationValidations = ({ onBack }: { onBack: () => void }) => {
         description: "L'utilisateur a été définitivement supprimé.",
       });
 
-      queryClient.invalidateQueries({ queryKey: ['admin-all-registrations'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-pending-registrations-count'] });
+      setRegistrations(prev => prev.filter(r => r.user_id !== userId));
     } catch (err) {
       console.error(err);
       toast({
@@ -122,48 +112,25 @@ const AdminRegistrationValidations = ({ onBack }: { onBack: () => void }) => {
     setDeleteConfirm({ open: false, userId: '', name: '' });
   };
 
-  const pendingUsers = allUsers?.filter(u => !u.is_approved) || [];
-  const approvedUsers = allUsers?.filter(u => u.is_approved) || [];
+  const pendingUsers = registrations.filter(u => !u.is_approved);
 
   const renderUserCard = (user: RegistrationUser) => {
-    const isApproved = user.is_approved;
-
     return (
       <Card
         key={user.user_id}
-        className={
-          isApproved
-            ? 'border-red-200 dark:border-red-800 bg-red-50/30 dark:bg-red-950/10 opacity-70'
-            : 'border-orange-200 dark:border-orange-800'
-        }
+        className="border-orange-200 dark:border-orange-800"
       >
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                isApproved
-                  ? 'bg-red-100 dark:bg-red-900/30'
-                  : 'bg-orange-100 dark:bg-orange-900/30'
-              }`}>
-                <User className={`h-5 w-5 ${
-                  isApproved
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-orange-600 dark:text-orange-400'
-                }`} />
+              <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-orange-100 dark:bg-orange-900/30">
+                <User className="h-5 w-5 text-orange-600 dark:text-orange-400" />
               </div>
               <div className="min-w-0">
-                <p className={`font-medium truncate ${
-                  isApproved
-                    ? 'text-red-500 dark:text-red-400 line-through'
-                    : 'text-foreground'
-                }`}>
+                <p className="font-medium truncate text-foreground">
                   {user.full_name || 'Sans nom'}
                 </p>
-                <p className={`text-sm truncate ${
-                  isApproved
-                    ? 'text-red-400/70 dark:text-red-500/70 line-through'
-                    : 'text-muted-foreground'
-                }`}>{user.email}</p>
+                <p className="text-sm truncate text-muted-foreground">{user.email}</p>
                 <div className="flex gap-2 mt-1 flex-wrap">
                   {user.gender && (
                     <Badge variant="outline" className="text-xs">
@@ -175,11 +142,6 @@ const AdminRegistrationValidations = ({ onBack }: { onBack: () => void }) => {
                       {user.age} ans
                     </Badge>
                   )}
-                  {isApproved && (
-                    <Badge className="bg-green-600 text-white text-xs">
-                      ✅ Validé
-                    </Badge>
-                  )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   {new Date(user.created_at).toLocaleDateString('fr-FR', {
@@ -188,39 +150,25 @@ const AdminRegistrationValidations = ({ onBack }: { onBack: () => void }) => {
                 </p>
               </div>
             </div>
-            {!isApproved ? (
-              <div className="flex gap-2 shrink-0">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-red-300 text-red-600 hover:bg-red-50"
-                  onClick={() => handleReject(user.user_id)}
-                  disabled={processingId === user.user_id}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                  onClick={() => handleApprove(user.user_id)}
-                  disabled={processingId === user.user_id}
-                >
-                  <Check className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <div className="flex gap-2 shrink-0">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-red-300 text-red-600 hover:bg-red-50"
-                  onClick={() => setDeleteConfirm({ open: true, userId: user.user_id, name: user.full_name || 'cet utilisateur' })}
-                  disabled={processingId === user.user_id}
-                >
-                  <ShieldOff className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
+            <div className="flex gap-2 shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50"
+                onClick={() => handleReject(user.user_id)}
+                disabled={processingId === user.user_id}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                className="bg-green-600 hover:bg-green-700 text-white"
+                onClick={() => handleApprove(user.user_id)}
+                disabled={processingId === user.user_id}
+              >
+                <Check className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -265,15 +213,6 @@ const AdminRegistrationValidations = ({ onBack }: { onBack: () => void }) => {
                   </p>
                 </CardContent>
               </Card>
-            )}
-
-            {approvedUsers.length > 0 && (
-              <>
-                <p className="text-sm font-semibold text-muted-foreground mt-4">
-                  Historique des validations ({approvedUsers.length})
-                </p>
-                {approvedUsers.map(renderUserCard)}
-              </>
             )}
           </div>
         )}
