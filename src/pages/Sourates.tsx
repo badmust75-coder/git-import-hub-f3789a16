@@ -300,14 +300,13 @@ const SouratesPage = () => {
 
       // Update progress percentage, preserving existing is_validated and is_memorized
       const existing = sourateProgress.get(sourateDbId);
-      await supabase
+      await (supabase as any)
         .from('user_sourate_progress')
         .upsert({
           user_id: user.id,
           sourate_id: sourateDbId,
           progress_percentage: percentage,
           is_validated: existing?.is_validated || false,
-          is_memorized: existing?.is_memorized || false,
         }, { onConflict: 'user_id,sourate_id' });
 
       setSourateProgress(prev => {
