@@ -166,15 +166,15 @@ const SouratesPage = () => {
         supabase.from('sourates').select('id, number'),
       ]);
 
-      const idMap = new Map<number, number>();
+      const idMap = new Map<number, string>();
       souratesDb?.forEach(s => idMap.set(s.number, s.id));
       setDbSourates(idMap);
 
-      const pMap = new Map<number, { is_validated: boolean; is_memorized: boolean; progress_percentage: number }>();
+      const pMap = new Map<string, { is_validated: boolean; is_memorized: boolean; progress_percentage: number }>();
       progressData?.forEach(p => {
         pMap.set(p.sourate_id, {
           is_validated: p.is_validated,
-          is_memorized: p.is_memorized,
+          is_memorized: (p as any).is_memorized ?? false,
           progress_percentage: p.progress_percentage,
         });
       });
@@ -182,7 +182,7 @@ const SouratesPage = () => {
 
       const vMap = new Map<string, boolean>();
       verseData?.forEach(v => {
-        vMap.set(`${v.sourate_id}-${v.verse_number}`, v.is_validated);
+        vMap.set(`${v.sourate_id}-${v.verse_number}`, (v as any).is_validated ?? v.is_memorized);
       });
       setVerseProgress(vMap);
 
