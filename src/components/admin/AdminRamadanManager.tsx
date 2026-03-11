@@ -1312,7 +1312,7 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
                 onAddYoutubeLink={(embedUrl) => {
                   if (selectedDay) {
                     // Save YouTube link as activity
-                    supabase.from('ramadan_day_activities').insert({
+                    (supabase as any).from('ramadan_day_activities').insert({
                       day_id: selectedDay,
                       type: 'youtube',
                       file_url: embedUrl,
