@@ -130,7 +130,7 @@ const AdminContent = () => {
         .update({
           audio_url: item.data.audio_url as string,
         })
-        .eq('id', item.id as number);
+        .eq('id', String(item.id));
       if (error) throw error;
     },
     onSuccess: () => {

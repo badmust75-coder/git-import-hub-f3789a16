@@ -120,7 +120,7 @@ const AdminSourateContent = () => {
     onError: () => toast.error('Erreur lors de la suppression'),
   });
 
-  const toggleUnlock = async (userId: string, sourateId: number) => {
+  const toggleUnlock = async (userId: string, sourateId: string) => {
     const existing = unlocks.find(u => u.user_id === userId && u.sourate_id === sourateId);
     if (existing) {
       await supabase.from('sourate_admin_unlocks').delete().eq('id', existing.id);
