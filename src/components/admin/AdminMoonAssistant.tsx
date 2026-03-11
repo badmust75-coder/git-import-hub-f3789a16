@@ -79,10 +79,10 @@ const AdminMoonAssistant = () => {
     if (!user) return;
     setLoadingConversations(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('admin_conversations')
         .select('*')
-        .eq('admin_user_id', user.id)
+        .eq('admin_id', user.id)
         .order('updated_at', { ascending: false });
       if (error) throw error;
       setConversations((data || []).map((c: any) => ({
