@@ -579,16 +579,18 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
     },
   });
 
-  // Toggle is_unlocked on a day (global unlock)
+  // Toggle is_locked on a day (global unlock)
   const toggleDayUnlockMutation = useMutation({
-    mutationFn: async ({ dayId, isUnlocked }: { dayId: string; isUnlocked: boolean }) => {
-      const { error } = await (supabase as any).from('ramadan_days').update({ is_unlocked: isUnlocked }).eq('id', dayId);
+    mutationFn: async ({ dayId, newLocked }: { dayId: string; newLocked: boolean }) => {
+      const { error } = await supabase.from('ramadan_days').update({ is_locked: newLocked }).eq('id', dayId);
       if (error) throw error;
+      return newLocked;
     },
-    onSuccess: () => {
+    onSuccess: (newLocked) => {
+      const dayNum = currentDayData?.day_number;
       queryClient.invalidateQueries({ queryKey: ['admin-ramadan-days-manager'] });
       queryClient.invalidateQueries({ queryKey: ['ramadan-days'] });
-      toast({ title: 'Statut de verrouillage mis à jour' });
+      toast({ title: newLocked ? `🔒 Jour ${dayNum} verrouillé pour tous les élèves` : `🔓 Jour ${dayNum} déverrouillé pour tous les élèves` });
     },
   });
 
