@@ -166,7 +166,7 @@ const MessagingDialog = ({ open, onOpenChange, onMessagesRead }: MessagingDialog
         .from('user_roles')
         .select('user_id')
         .eq('role', 'admin');
-      console.log('ADMIN_ROLES:', adminRoles, 'ERR:', errRoles);
+      addLog('ADMIN_ROLES: ' + JSON.stringify(adminRoles) + ' ERR: ' + JSON.stringify(errRoles));
 
       if (errRoles || !adminRoles?.length) {
         console.error('Aucun admin trouvé ou erreur:', errRoles);
