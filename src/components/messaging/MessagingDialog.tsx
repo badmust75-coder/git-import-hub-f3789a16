@@ -255,6 +255,7 @@ const MessagingDialog = ({ open, onOpenChange, onMessagesRead }: MessagingDialog
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md h-[70vh] flex flex-col">
         <DialogHeader>
