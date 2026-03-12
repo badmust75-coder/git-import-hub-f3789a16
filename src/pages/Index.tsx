@@ -54,8 +54,6 @@ const Index = () => {
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
   const [showNotifBanner, setShowNotifBanner] = useState(false);
   const [activatingNotif, setActivatingNotif] = useState(false);
-  const [draggedModuleId, setDraggedModuleId] = useState<string | null>(null);
-  const [dragOverModuleId, setDragOverModuleId] = useState<string | null>(null);
   const { data: progress } = useUserProgress();
 
   // Fetch modules from DB
@@ -70,50 +68,26 @@ const Index = () => {
     }
   });
 
-  // Drag & drop reorder (admin only)
-  const handleModuleDragStart = useCallback((e: React.DragEvent, id: string) => {
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', id);
-    setDraggedModuleId(id);
-  }, []);
-
-  const handleModuleDragOver = useCallback((e: React.DragEvent, id: string) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setDragOverModuleId(id);
-  }, []);
-
-  const handleModuleDragEnd = useCallback(() => {
-    setDraggedModuleId(null);
-    setDragOverModuleId(null);
-  }, []);
-
-  const handleModuleDrop = useCallback(async (e: React.DragEvent, targetId: string) => {
-    e.preventDefault();
-    setDragOverModuleId(null);
-    const sourceId = e.dataTransfer.getData('text/plain');
-    if (!sourceId || sourceId === targetId || !modules) return;
-
-    const oldIndex = modules.findIndex(m => m.id === sourceId);
-    const newIndex = modules.findIndex(m => m.id === targetId);
-    if (oldIndex === -1 || newIndex === -1) return;
+  // Arrow-based reorder (admin only)
+  const moveModule = useCallback(async (index: number, direction: 'up' | 'down') => {
+    if (!modules) return;
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= modules.length) return;
 
     const reordered = [...modules];
-    const [moved] = reordered.splice(oldIndex, 1);
-    reordered.splice(newIndex, 0, moved);
-
-    // Optimistic update
+    [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
     const updated = reordered.map((m, i) => ({ ...m, display_order: i }));
     queryClient.setQueryData(['learning-modules', isAdmin], updated);
-    setDraggedModuleId(null);
 
-    // Persist to DB
-    await Promise.all(
-      updated.map((m, i) =>
-        supabase.from('learning_modules').update({ display_order: i }).eq('id', m.id)
-      )
-    );
-    toast.success('Ordre mis à jour');
+    const { error: e1 } = await supabase.from('learning_modules').update({ display_order: targetIndex }).eq('id', updated[targetIndex].id);
+    const { error: e2 } = await supabase.from('learning_modules').update({ display_order: index }).eq('id', updated[index].id);
+
+    if (e1 || e2) {
+      queryClient.invalidateQueries({ queryKey: ['learning-modules'] });
+      toast.error('Erreur lors de la mise à jour');
+    } else {
+      toast.success('Ordre mis à jour');
+    }
   }, [modules, isAdmin, queryClient]);
 
   const toggleActiveMutation = useMutation({
@@ -317,18 +291,10 @@ const Index = () => {
               const Icon = ICON_MAP[mod.icon] || null;
               const slug = getModuleSlug(mod);
               const fallback = MODULE_EMOJI_FALLBACK[slug];
-              const isDragging = draggedModuleId === mod.id;
-              const isDragOver = dragOverModuleId === mod.id && draggedModuleId !== mod.id;
               return (
                 <div
                   key={mod.id}
-                  className={cn("flex flex-col items-center relative", isDragOver && "ring-2 ring-primary ring-offset-2 rounded-2xl")}
-                  draggable={isAdmin}
-                  onDragStart={isAdmin ? (e) => handleModuleDragStart(e, mod.id) : undefined}
-                  onDragOver={isAdmin ? (e) => handleModuleDragOver(e, mod.id) : undefined}
-                  onDragEnd={isAdmin ? handleModuleDragEnd : undefined}
-                  onDrop={isAdmin ? (e) => handleModuleDrop(e, mod.id) : undefined}
-                  style={{ opacity: isDragging ? 0.4 : 1 }}
+                  className="flex flex-col items-center relative"
                 >
                   <button
                     onClick={() => handleModuleClick(mod)}
@@ -373,6 +339,21 @@ const Index = () => {
                   </button>
 
 
+                  {/* Admin arrow reorder buttons */}
+                  {isAdmin && modules &&
+                  <div className="absolute top-1 left-1 z-20 flex flex-col gap-0.5">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); moveModule(index, 'up'); }}
+                        disabled={index === 0}
+                        className="w-5 h-5 rounded bg-muted hover:bg-muted-foreground/20 disabled:opacity-30 flex items-center justify-center text-[10px] text-foreground"
+                      >▲</button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); moveModule(index, 'down'); }}
+                        disabled={index === (modules?.length ?? 0) - 1}
+                        className="w-5 h-5 rounded bg-muted hover:bg-muted-foreground/20 disabled:opacity-30 flex items-center justify-center text-[10px] text-foreground"
+                      >▼</button>
+                    </div>
+                  }
                   {/* Admin 3-dot menu */}
                   {isAdmin &&
                   <div className="absolute top-2 right-2 z-20">
