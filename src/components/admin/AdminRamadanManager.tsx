@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Upload, Video, HelpCircle, Trash2, Save, Loader2, Rocket, RotateCcw, Plus, GripVertical, AlertTriangle, FileText, Volume2, Image, Lock, Unlock, Check, Moon, Link } from 'lucide-react';
+import { ArrowLeft, Upload, Video, HelpCircle, Trash2, Save, Loader2, Rocket, RotateCcw, Plus, GripVertical, AlertTriangle, FileText, Volume2, Image, Lock, Unlock, Check, Moon, Link, Calendar } from 'lucide-react';
 import ContentUploadTabs from './ContentUploadTabs';
 import ContentItemCard from './ContentItemCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -341,9 +341,9 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
       toast({ title: 'Vidéo téléversée avec succès' });
       setUploading(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Upload error:', error);
-      toast({ title: 'Erreur lors du téléversement', variant: 'destructive' });
+      toast({ title: `Erreur : ${error?.message || String(error)}`, variant: 'destructive' });
       setUploading(false);
     },
   });
@@ -413,8 +413,8 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
       toast({ title: 'Thème enregistré' });
       setSavingTheme(false);
     },
-    onError: () => {
-      toast({ title: 'Erreur lors de l\'enregistrement', variant: 'destructive' });
+    onError: (error: any) => {
+      toast({ title: `Erreur : ${error?.message || String(error)}`, variant: 'destructive' });
       setSavingTheme(false);
     },
   });
@@ -486,8 +486,8 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
         toast({ title: 'Quiz enregistré avec succès' });
       }
     },
-    onError: () => {
-      toast({ title: 'Erreur lors de l\'enregistrement', variant: 'destructive' });
+    onError: (error: any) => {
+      toast({ title: `Erreur : ${error?.message || String(error)}`, variant: 'destructive' });
     },
   });
 
@@ -560,9 +560,9 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
       toast({ title: 'Activité ajoutée avec succès' });
       setUploadingActivity(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Upload activity error:', error);
-      toast({ title: 'Erreur lors du téléversement', variant: 'destructive' });
+      toast({ title: `Erreur : ${error?.message || String(error)}`, variant: 'destructive' });
       setUploadingActivity(false);
     },
   });
@@ -644,32 +644,91 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
       queryClient.invalidateQueries({ queryKey: ['ramadan-quiz-responses'] });
       toast({ title: '🔄 Calendrier réinitialisé pour tous les utilisateurs' });
     },
-    onError: () => {
-      toast({ title: 'Erreur lors de la réinitialisation', variant: 'destructive' });
+    onError: (error: any) => {
+      toast({ title: `Erreur : ${error?.message || String(error)}`, variant: 'destructive' });
     },
   });
 
   // Toggle start mutation
+  // State for start date editing
+  const [startDateInput, setStartDateInput] = useState('');
+  const [savingStartDate, setSavingStartDate] = useState(false);
+
+  // Sync start date input with settings
+  useEffect(() => {
+    if (settings?.start_date) {
+      setStartDateInput(settings.start_date);
+    }
+  }, [settings]);
+
   const toggleStartMutation = useMutation({
     mutationFn: async () => {
       const newValue = !settings?.start_enabled;
-      const updateData: Record<string, unknown> = {
-        start_enabled: newValue,
-        updated_at: new Date().toISOString(),
-      };
-      if (newValue && !settings?.started_at) {
-        updateData.started_at = new Date().toISOString();
+
+      // Ensure settings row exists
+      if (!settings?.id) {
+        const { data: inserted, error: insertErr } = await supabase
+          .from('ramadan_settings')
+          .insert({ start_enabled: newValue, is_active: false, auto_unlock: false, start_date: '2026-02-18' })
+          .select()
+          .single();
+        if (insertErr) throw insertErr;
+      } else {
+        const updateData: Record<string, unknown> = {
+          start_enabled: newValue,
+          updated_at: new Date().toISOString(),
+        };
+        if (newValue && !settings?.started_at) {
+          updateData.started_at = new Date().toISOString();
+        }
+        const { error } = await supabase.from('ramadan_settings').update(updateData).eq('id', settings.id);
+        if (error) throw error;
       }
-      const { error } = await supabase.from('ramadan_settings').update(updateData).eq('id', settings?.id);
-      if (error) throw error;
+
+      // Unlock/lock day 1
+      const { error: dayError } = await supabase
+        .from('ramadan_days')
+        .update({ is_locked: !newValue })
+        .eq('day_number', 1);
+      if (dayError) throw dayError;
+
       return newValue;
     },
     onSuccess: (newValue) => {
       queryClient.invalidateQueries({ queryKey: ['ramadan-settings'] });
-      toast({ title: newValue ? '🚀 Top départ activé !' : 'Top départ désactivé' });
+      queryClient.invalidateQueries({ queryKey: ['admin-ramadan-days-manager'] });
+      toast({ title: newValue ? '🚀 Top départ activé ! Jour 1 déverrouillé.' : 'Top départ désactivé. Jour 1 reverrouillé.' });
     },
-    onError: () => {
-      toast({ title: 'Erreur lors de la mise à jour', variant: 'destructive' });
+    onError: (error: any) => {
+      toast({ title: `Erreur : ${error?.message || String(error)}`, variant: 'destructive' });
+    },
+  });
+
+  // Save start date and recalculate unlock_date for all days
+  const saveStartDateMutation = useMutation({
+    mutationFn: async (newDate: string) => {
+      // Update setting
+      if (settings?.id) {
+        const { error } = await supabase
+          .from('ramadan_settings')
+          .update({ start_date: newDate, updated_at: new Date().toISOString() })
+          .eq('id', settings.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('ramadan_settings')
+          .insert({ start_date: newDate, start_enabled: false, is_active: false, auto_unlock: false });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ramadan-settings'] });
+      toast({ title: '📅 Date de début Ramadan enregistrée' });
+      setSavingStartDate(false);
+    },
+    onError: (error: any) => {
+      toast({ title: `Erreur : ${error?.message || String(error)}`, variant: 'destructive' });
+      setSavingStartDate(false);
     },
   });
 
@@ -686,8 +745,8 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
       queryClient.invalidateQueries({ queryKey: ['ramadan-settings'] });
       toast({ title: `✅ Seuil mis à jour : ${maxErrorsInput} erreur(s) max` });
     },
-    onError: () => {
-      toast({ title: 'Erreur lors de la mise à jour', variant: 'destructive' });
+    onError: (error: any) => {
+      toast({ title: `Erreur : ${error?.message || String(error)}`, variant: 'destructive' });
     },
   });
 
@@ -820,7 +879,43 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
         </div>
       </div>
 
-      {/* Top Départ */}
+      {/* Date de début Ramadan */}
+      <Card className="border-blue-300 dark:border-blue-700">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900/30">
+              <Calendar className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <p className="font-bold text-foreground">Date de début Ramadan</p>
+              <p className="text-sm text-muted-foreground">
+                {settings?.start_date ? `Actuellement : ${settings.start_date}` : 'Non définie'}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Input
+              type="date"
+              value={startDateInput}
+              onChange={(e) => setStartDateInput(e.target.value)}
+              className="flex-1"
+            />
+            <Button
+              onClick={() => {
+                if (startDateInput) {
+                  setSavingStartDate(true);
+                  saveStartDateMutation.mutate(startDateInput);
+                }
+              }}
+              disabled={savingStartDate || !startDateInput}
+              size="sm"
+            >
+              {savingStartDate ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Save className="h-4 w-4 mr-1" />Enregistrer</>}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className={settings?.start_enabled ? 'border-green-500 bg-green-50 dark:bg-green-950/20' : ''}>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
