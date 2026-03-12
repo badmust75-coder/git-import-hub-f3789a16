@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Moon, BookOpen, Hand, BookMarked, Sparkles, MessageSquare, Star, Music, Video, FileText, Image, Heart, List, Scroll, Users, MoreVertical, EyeOff, Eye, Bell, X } from 'lucide-react';
+import { Moon, BookOpen, Hand, BookMarked, Sparkles, MessageSquare, Star, Music, Video, FileText, Image, Heart, List, Scroll, Users, MoreVertical, EyeOff, Eye, Bell, X, Sun, MessageCircle, Book, Languages, Library, RefreshCw, Feather, BookHeart, NotebookPen, ClipboardList, ScrollText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import AppLayout from '@/components/layout/AppLayout';
@@ -19,7 +19,32 @@ import {
 '@/components/ui/dropdown-menu';
 import PushAutoSubscribe from '@/components/push/PushAutoSubscribe';
 const ICON_MAP: Record<string, LucideIcon> = {
-  Moon, BookOpen, Hand, BookMarked, Sparkles, MessageSquare, Star, Music, Video, FileText, Image, Heart, List, Scroll, Users
+  Moon, BookOpen, Hand, BookMarked, Sparkles, MessageSquare, Star, Music, Video, FileText, Image, Heart, List, Scroll, Users, Sun, MessageCircle, Book, Languages, Library, RefreshCw, Feather, BookHeart, NotebookPen, ClipboardList, ScrollText
+};
+
+const MODULE_EMOJI_FALLBACK: Record<string, { emoji: string; color: string }> = {
+  "ramadan": { emoji: "🌙", color: "#f97316" },
+  "alphabet": { emoji: "أ", color: "#3b82f6" },
+  "invocations": { emoji: "🤲", color: "#8b5cf6" },
+  "priere": { emoji: "🕌", color: "#06b6d4" },
+  "grammaire": { emoji: "📖", color: "#10b981" },
+  "99-noms": { emoji: "✨", color: "#f59e0b" },
+  "sourates": { emoji: "📿", color: "#6366f1" },
+  "nourania": { emoji: "🌟", color: "#eab308" },
+  "vocabulaire": { emoji: "💬", color: "#ec4899" },
+  "lecture-coran": { emoji: "📖", color: "#14b8a6" },
+  "darija": { emoji: "🗣️", color: "#f97316" },
+  "dictionnaire": { emoji: "📚", color: "#8b5cf6" },
+  "dhikr": { emoji: "📿", color: "#10b981" },
+  "hadiths": { emoji: "🕊️", color: "#6366f1" },
+  "histoires-prophetes": { emoji: "⭐", color: "#f59e0b" },
+  "cahier-texte": { emoji: "📝", color: "#3b82f6" },
+  "registre-presence": { emoji: "✅", color: "#10b981" },
+};
+
+const getModuleSlug = (mod: any): string => {
+  if (mod.builtin_path) return mod.builtin_path.replace(/^\//, '');
+  return (mod.title || '').toLowerCase().replace(/\s+/g, '-').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 };
 
 const Index = () => {
