@@ -745,8 +745,8 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
       queryClient.invalidateQueries({ queryKey: ['ramadan-settings'] });
       toast({ title: `✅ Seuil mis à jour : ${maxErrorsInput} erreur(s) max` });
     },
-    onError: () => {
-      toast({ title: 'Erreur lors de la mise à jour', variant: 'destructive' });
+    onError: (error: any) => {
+      toast({ title: `Erreur : ${error?.message || String(error)}`, variant: 'destructive' });
     },
   });
 
