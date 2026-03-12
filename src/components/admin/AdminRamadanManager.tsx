@@ -579,16 +579,18 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
     },
   });
 
-  // Toggle is_unlocked on a day (global unlock)
+  // Toggle is_locked on a day (global unlock)
   const toggleDayUnlockMutation = useMutation({
-    mutationFn: async ({ dayId, isUnlocked }: { dayId: string; isUnlocked: boolean }) => {
-      const { error } = await (supabase as any).from('ramadan_days').update({ is_unlocked: isUnlocked }).eq('id', dayId);
+    mutationFn: async ({ dayId, newLocked }: { dayId: string; newLocked: boolean }) => {
+      const { error } = await supabase.from('ramadan_days').update({ is_locked: newLocked }).eq('id', dayId);
       if (error) throw error;
+      return newLocked;
     },
-    onSuccess: () => {
+    onSuccess: (newLocked) => {
+      const dayNum = currentDayData?.day_number;
       queryClient.invalidateQueries({ queryKey: ['admin-ramadan-days-manager'] });
       queryClient.invalidateQueries({ queryKey: ['ramadan-days'] });
-      toast({ title: 'Statut de verrouillage mis à jour' });
+      toast({ title: newLocked ? `🔒 Jour ${dayNum} verrouillé pour tous les élèves` : `🔓 Jour ${dayNum} déverrouillé pour tous les élèves` });
     },
   });
 
@@ -1055,7 +1057,7 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
           const hasQuiz = quizCount > 0;
           const isComplete = hasVideo && hasQuiz;
           const isPartial = hasVideo || hasQuiz;
-          const isGloballyUnlocked = (day as any).is_unlocked;
+          const isGloballyUnlocked = !day.is_locked;
           const hasExceptions = getExceptionsForDay(day.id).length > 0;
 
           const getDayBg = () => {
@@ -1153,22 +1155,25 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
             {/* Unlock Section */}
             <div className="space-y-3 p-3 rounded-lg border bg-muted/30">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-semibold flex items-center gap-2">
-                  {(currentDayData as any)?.is_unlocked ? <Unlock className="h-4 w-4 text-green-500" /> : <Lock className="h-4 w-4 text-muted-foreground" />}
-                  Déverrouillage global
-                </Label>
+                <div>
+                  <Label className="text-sm font-semibold flex items-center gap-2">
+                    🔒 Déverrouillage global
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {currentDayData?.is_locked
+                      ? '🔒 Jour verrouillé pour tous les élèves'
+                      : '🔓 Jour accessible à tous les élèves'}
+                  </p>
+                </div>
                 <Switch
-                  checked={(currentDayData as any)?.is_unlocked ?? false}
-                  onCheckedChange={(checked) => {
-                    if (selectedDay) toggleDayUnlockMutation.mutate({ dayId: selectedDay, isUnlocked: checked });
+                  checked={!(currentDayData?.is_locked ?? true)}
+                  onCheckedChange={() => {
+                    if (selectedDay && currentDayData) {
+                      toggleDayUnlockMutation.mutate({ dayId: selectedDay, newLocked: !currentDayData.is_locked });
+                    }
                   }}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
-                {(currentDayData as any)?.is_unlocked
-                  ? '🔓 Ce jour est déverrouillé pour tous les élèves'
-                  : '🔒 Verrouillage automatique actif (fenêtre de 4 jours)'}
-              </p>
 
               {/* Per-student exceptions */}
               <div className="border-t pt-3 space-y-2">
