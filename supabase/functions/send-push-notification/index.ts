@@ -287,15 +287,29 @@ serve(async (req) => {
     const results = await Promise.all(
       subscriptions.map(sub =>
         sendPushToEndpoint(
-          { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
+          { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth_key },
           payload, vapidPublicKey, vapidPrivateKey
         )
       )
     );
 
-    // Clean expired subscriptions (410)
+    // Log all errors for debugging
+    const errorsArray: { endpoint: string; error?: string; statusCode?: number }[] = [];
+    results.forEach((r, i) => {
+      if (!r.success) {
+        const errObj = {
+          endpoint: subscriptions[i].endpoint?.substring(0, 80),
+          error: r.error,
+          statusCode: r.statusCode,
+        };
+        errorsArray.push(errObj);
+        console.error('PUSH_SEND_ERROR', JSON.stringify(errObj));
+      }
+    });
+
+    // Clean expired subscriptions (410 or 404)
     const expiredEndpoints = subscriptions
-      .filter((_, i) => results[i].statusCode === 410)
+      .filter((_, i) => results[i].statusCode === 410 || results[i].statusCode === 404)
       .map(sub => sub.endpoint);
     if (expiredEndpoints.length > 0) {
       await supabase.from('push_subscriptions').delete().in('endpoint', expiredEndpoints);
@@ -311,7 +325,7 @@ serve(async (req) => {
         type: type || 'push',
         total_recipients: successCount,
         successful_sends: successCount,
-        failed_sends: 0,
+        failed_sends: errorsArray.length,
         expired_cleaned: expiredEndpoints.length,
       });
     }
