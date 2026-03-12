@@ -42,18 +42,26 @@ const AdminRegistrationValidations = ({ onBack }: { onBack: () => void }) => {
   const handleApprove = async (userId: string) => {
     setProcessingId(userId);
     try {
-      const { error: updateError } = await (supabase as any)
+      const { error: updateError, count } = await (supabase as any)
         .from('profiles')
         .update({ is_approved: true })
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select();
       if (updateError) throw updateError;
+      console.log('Profile update result, rows matched:', count);
 
       const { error: roleError } = await (supabase as any)
         .from('user_roles')
         .insert({ user_id: userId, role: 'student' });
       if (roleError && !roleError.message?.includes('duplicate')) throw roleError;
 
-      setRegistrations(prev => prev.filter(r => r.user_id !== userId));
+      // Refetch from DB instead of local filter
+      const { data: refreshed } = await (supabase as any)
+        .from('profiles')
+        .select('*')
+        .eq('is_approved', false)
+        .order('created_at', { ascending: false });
+      setRegistrations(refreshed || []);
 
       queryClient.invalidateQueries({ queryKey: ['admin-pending-total-count'] });
       queryClient.invalidateQueries({ queryKey: ['admin-students'] });
