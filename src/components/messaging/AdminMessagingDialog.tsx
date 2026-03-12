@@ -262,6 +262,13 @@ const AdminMessagingDialog = ({ open, onOpenChange, onMessagesRead }: AdminMessa
       });
       if (error) throw error;
 
+      // Push notification to student
+      sendPushNotification({
+        title: '✉️ Nouveau message du professeur',
+        body: newMsgText.trim().substring(0, 100),
+        userId: newMsgSelectedUser.user_id,
+      });
+
       // Close new message dialog and open the conversation
       setNewMsgOpen(false);
       setNewMsgText('');
