@@ -226,6 +226,14 @@ const AdminMessagingDialog = ({ open, onOpenChange, onMessagesRead }: AdminMessa
         sender_type: 'admin', message_type: 'audio', audio_url: urlData.publicUrl,
       });
       if (error) throw error;
+
+      // Push notification to student
+      sendPushNotification({
+        title: '✉️ Message audio du professeur',
+        body: 'Vous avez reçu un message audio',
+        userId: selectedConversation.user_id,
+      });
+
       toast({ title: 'Audio envoyé ✓' }); refetchMessages();
     } catch (err: any) { toast({ title: 'Erreur', description: (err?.message || 'Erreur inconnue') + (err?.code ? ` | code: ${err.code}` : ''), variant: 'destructive' }); }
     finally { setIsSending(false); }
