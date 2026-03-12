@@ -68,50 +68,26 @@ const Index = () => {
     }
   });
 
-  // Drag & drop reorder (admin only)
-  const handleModuleDragStart = useCallback((e: React.DragEvent, id: string) => {
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', id);
-    setDraggedModuleId(id);
-  }, []);
-
-  const handleModuleDragOver = useCallback((e: React.DragEvent, id: string) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setDragOverModuleId(id);
-  }, []);
-
-  const handleModuleDragEnd = useCallback(() => {
-    setDraggedModuleId(null);
-    setDragOverModuleId(null);
-  }, []);
-
-  const handleModuleDrop = useCallback(async (e: React.DragEvent, targetId: string) => {
-    e.preventDefault();
-    setDragOverModuleId(null);
-    const sourceId = e.dataTransfer.getData('text/plain');
-    if (!sourceId || sourceId === targetId || !modules) return;
-
-    const oldIndex = modules.findIndex(m => m.id === sourceId);
-    const newIndex = modules.findIndex(m => m.id === targetId);
-    if (oldIndex === -1 || newIndex === -1) return;
+  // Arrow-based reorder (admin only)
+  const moveModule = useCallback(async (index: number, direction: 'up' | 'down') => {
+    if (!modules) return;
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= modules.length) return;
 
     const reordered = [...modules];
-    const [moved] = reordered.splice(oldIndex, 1);
-    reordered.splice(newIndex, 0, moved);
-
-    // Optimistic update
+    [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
     const updated = reordered.map((m, i) => ({ ...m, display_order: i }));
     queryClient.setQueryData(['learning-modules', isAdmin], updated);
-    setDraggedModuleId(null);
 
-    // Persist to DB
-    await Promise.all(
-      updated.map((m, i) =>
-        supabase.from('learning_modules').update({ display_order: i }).eq('id', m.id)
-      )
-    );
-    toast.success('Ordre mis à jour');
+    const { error: e1 } = await supabase.from('learning_modules').update({ display_order: targetIndex }).eq('id', updated[targetIndex].id);
+    const { error: e2 } = await supabase.from('learning_modules').update({ display_order: index }).eq('id', updated[index].id);
+
+    if (e1 || e2) {
+      queryClient.invalidateQueries({ queryKey: ['learning-modules'] });
+      toast.error('Erreur lors de la mise à jour');
+    } else {
+      toast.success('Ordre mis à jour');
+    }
   }, [modules, isAdmin, queryClient]);
 
   const toggleActiveMutation = useMutation({
