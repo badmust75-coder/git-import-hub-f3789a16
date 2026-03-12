@@ -414,6 +414,9 @@ const Admin = () => {
 
   // Map static card keys to builtin_path for visibility toggle
   const CARD_KEY_TO_BUILTIN_PATH: Record<string, string> = {
+    users: '/admin/users',
+    messages: '/admin/messages',
+    students: '/admin/students',
     ramadan: '/ramadan',
     nourania: '/nourania',
     alphabet: '/alphabet',
@@ -429,6 +432,8 @@ const Admin = () => {
     dhikr: '/module/dhikr',
     hadiths: '/module/hadiths',
     'histoires-prophetes': '/module/histoires-prophetes',
+    homework: '/admin/homework',
+    attendance: '/admin/attendance',
   };
 
   const getModuleForCardKey = (key: string) => {
