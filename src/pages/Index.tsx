@@ -274,21 +274,13 @@ const Index = () => {
                   <button
                     onClick={() => handleModuleClick(mod)}
                     className={cn(
-                      'module-card relative overflow-hidden rounded-2xl p-4 text-left w-full',
+                      'relative bg-card rounded-2xl p-4 shadow-sm border border-border w-full',
                       'flex flex-col items-center justify-center min-h-[160px]',
                       'animate-slide-up',
                       `stagger-${index % 6 + 1}`,
                       !mod.is_active && isAdmin && 'opacity-50 grayscale'
                     )}
                     style={{ animationFillMode: 'both' }}>
-                    
-                    {/* Background gradient overlay */}
-                    <div
-                      className={cn(
-                        'absolute inset-0 opacity-10 bg-gradient-to-br',
-                        mod.gradient
-                      )} />
-                    
 
                     {/* Hidden badge for admin */}
                     {isAdmin && !mod.is_active &&
@@ -297,43 +289,29 @@ const Index = () => {
                       </div>
                     }
 
-                    {/* Icon or Image */}
-                    <div className="relative z-10 mb-3">
+                    {/* Icon */}
+                    <div className="relative z-10">
                       {mod.image_url ?
-                      <img src={mod.image_url} alt={mod.title} className="w-14 h-14 rounded-2xl object-cover shadow-lg" loading="lazy" width={56} height={56} /> :
-                      Icon ?
-                      <div className={cn(
-                        'w-14 h-14 rounded-2xl flex items-center justify-center',
-                        'bg-gradient-to-br shadow-lg',
-                        mod.gradient
-                      )}>
-                          <Icon className={cn('h-7 w-7', mod.icon_color)} />
-                        </div> :
+                      <img src={mod.image_url} alt={mod.title} className="w-14 h-14 rounded-2xl object-cover shadow-lg mx-auto mb-2" loading="lazy" width={56} height={56} /> :
                       <div
-                        className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
-                        style={{
-                          backgroundColor: (fallback?.color || '#6366f1') + '20',
-                          border: `2px solid ${(fallback?.color || '#6366f1')}40`
-                        }}>
-                        <span style={{ fontSize: '28px' }}>
-                          {fallback?.emoji ?? '📚'}
-                        </span>
+                        className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-2"
+                        style={{ backgroundColor: fallback?.bgColor || '#f3f4f6' }}>
+                        {fallback?.emoji ?? '📚'}
                       </div>
                       }
                     </div>
 
                     {/* Text */}
-                    <div className="relative z-10 text-center">
-                      <p className="font-arabic text-lg text-muted-foreground mb-1">
-                        {mod.title_arabic}
-                      </p>
-                      <h3 className="font-bold text-foreground text-lg">
-                        {mod.title}
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {mod.description}
-                      </p>
-                    </div>
+                    <p className="font-arabic text-xs text-muted-foreground text-center">
+                      {mod.title_arabic}
+                    </p>
+                    <p className="font-bold text-center text-sm text-foreground">
+                      {mod.title}
+                    </p>
+                    <p className="text-xs text-muted-foreground text-center mt-0.5">
+                      {mod.description}
+                    </p>
+                  </button>
 
                     {/* Decorative corner */}
                     <div className="absolute top-0 right-0 w-16 h-16 opacity-5">
