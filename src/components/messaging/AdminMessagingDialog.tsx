@@ -198,7 +198,7 @@ const AdminMessagingDialog = ({ open, onOpenChange, onMessagesRead }: AdminMessa
       });
       if (error) throw error;
       setReplyMessage(''); refetchMessages();
-    } catch { toast({ title: 'Erreur', variant: 'destructive' }); }
+    } catch (err: any) { toast({ title: 'Erreur', description: (err?.message || 'Erreur inconnue') + (err?.code ? ` | code: ${err.code}` : ''), variant: 'destructive' }); }
     finally { setIsSending(false); }
   };
 
@@ -218,7 +218,7 @@ const AdminMessagingDialog = ({ open, onOpenChange, onMessagesRead }: AdminMessa
       });
       if (error) throw error;
       toast({ title: 'Audio envoyé ✓' }); refetchMessages();
-    } catch { toast({ title: 'Erreur', variant: 'destructive' }); }
+    } catch (err: any) { toast({ title: 'Erreur', description: (err?.message || 'Erreur inconnue') + (err?.code ? ` | code: ${err.code}` : ''), variant: 'destructive' }); }
     finally { setIsSending(false); }
   };
 
@@ -264,8 +264,8 @@ const AdminMessagingDialog = ({ open, onOpenChange, onMessagesRead }: AdminMessa
       setSelectedConversation(conv);
 
       toast({ title: 'Message envoyé ✓' });
-    } catch {
-      toast({ title: 'Erreur', variant: 'destructive' });
+    } catch (err: any) {
+      toast({ title: 'Erreur', description: (err?.message || 'Erreur inconnue') + (err?.code ? ` | code: ${err.code}` : ''), variant: 'destructive' });
     } finally {
       setNewMsgSending(false);
     }
@@ -332,8 +332,8 @@ const AdminMessagingDialog = ({ open, onOpenChange, onMessagesRead }: AdminMessa
       refetch();
 
       toast({ title: `✅ Message envoyé à ${targets.length} élève${targets.length > 1 ? 's' : ''} !` });
-    } catch {
-      toast({ title: 'Erreur', description: "Impossible d'envoyer le message groupé", variant: 'destructive' });
+    } catch (err: any) {
+      toast({ title: 'Erreur', description: (err?.message || 'Erreur inconnue') + (err?.code ? ` | code: ${err.code}` : ''), variant: 'destructive' });
     } finally {
       setGroupMsgSending(false);
     }
