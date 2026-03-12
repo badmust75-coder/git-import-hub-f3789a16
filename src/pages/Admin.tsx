@@ -630,6 +630,7 @@ const Admin = () => {
                         bgColor={card.bgColor}
                         cardBgColor={card.cardBgColor}
                         onClick={() => setCurrentView(card.view)}
+                        actionButton={renderVisibilityToggle(card.key)}
                       />
                     </SortableCard>
                   );
