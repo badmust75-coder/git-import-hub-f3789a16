@@ -650,26 +650,85 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
   });
 
   // Toggle start mutation
+  // State for start date editing
+  const [startDateInput, setStartDateInput] = useState('');
+  const [savingStartDate, setSavingStartDate] = useState(false);
+
+  // Sync start date input with settings
+  useEffect(() => {
+    if (settings?.start_date) {
+      setStartDateInput(settings.start_date);
+    }
+  }, [settings]);
+
   const toggleStartMutation = useMutation({
     mutationFn: async () => {
       const newValue = !settings?.start_enabled;
-      const updateData: Record<string, unknown> = {
-        start_enabled: newValue,
-        updated_at: new Date().toISOString(),
-      };
-      if (newValue && !settings?.started_at) {
-        updateData.started_at = new Date().toISOString();
+
+      // Ensure settings row exists
+      if (!settings?.id) {
+        const { data: inserted, error: insertErr } = await supabase
+          .from('ramadan_settings')
+          .insert({ start_enabled: newValue, is_active: false, auto_unlock: false, start_date: '2026-02-18' })
+          .select()
+          .single();
+        if (insertErr) throw insertErr;
+      } else {
+        const updateData: Record<string, unknown> = {
+          start_enabled: newValue,
+          updated_at: new Date().toISOString(),
+        };
+        if (newValue && !settings?.started_at) {
+          updateData.started_at = new Date().toISOString();
+        }
+        const { error } = await supabase.from('ramadan_settings').update(updateData).eq('id', settings.id);
+        if (error) throw error;
       }
-      const { error } = await supabase.from('ramadan_settings').update(updateData).eq('id', settings?.id);
-      if (error) throw error;
+
+      // Unlock/lock day 1
+      const { error: dayError } = await supabase
+        .from('ramadan_days')
+        .update({ is_locked: !newValue })
+        .eq('day_number', 1);
+      if (dayError) throw dayError;
+
       return newValue;
     },
     onSuccess: (newValue) => {
       queryClient.invalidateQueries({ queryKey: ['ramadan-settings'] });
-      toast({ title: newValue ? '🚀 Top départ activé !' : 'Top départ désactivé' });
+      queryClient.invalidateQueries({ queryKey: ['admin-ramadan-days-manager'] });
+      toast({ title: newValue ? '🚀 Top départ activé ! Jour 1 déverrouillé.' : 'Top départ désactivé. Jour 1 reverrouillé.' });
     },
-    onError: () => {
-      toast({ title: 'Erreur lors de la mise à jour', variant: 'destructive' });
+    onError: (error: any) => {
+      toast({ title: `Erreur : ${error?.message || String(error)}`, variant: 'destructive' });
+    },
+  });
+
+  // Save start date and recalculate unlock_date for all days
+  const saveStartDateMutation = useMutation({
+    mutationFn: async (newDate: string) => {
+      // Update setting
+      if (settings?.id) {
+        const { error } = await supabase
+          .from('ramadan_settings')
+          .update({ start_date: newDate, updated_at: new Date().toISOString() })
+          .eq('id', settings.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('ramadan_settings')
+          .insert({ start_date: newDate, start_enabled: false, is_active: false, auto_unlock: false });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ramadan-settings'] });
+      toast({ title: '📅 Date de début Ramadan enregistrée' });
+      setSavingStartDate(false);
+    },
+    onError: (error: any) => {
+      toast({ title: `Erreur : ${error?.message || String(error)}`, variant: 'destructive' });
+      setSavingStartDate(false);
     },
   });
 
