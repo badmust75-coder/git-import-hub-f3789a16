@@ -341,9 +341,9 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
       toast({ title: 'Vidéo téléversée avec succès' });
       setUploading(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Upload error:', error);
-      toast({ title: 'Erreur lors du téléversement', variant: 'destructive' });
+      toast({ title: `Erreur : ${error?.message || String(error)}`, variant: 'destructive' });
       setUploading(false);
     },
   });
