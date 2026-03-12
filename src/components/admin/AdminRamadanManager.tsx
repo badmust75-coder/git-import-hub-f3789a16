@@ -644,8 +644,8 @@ const AdminRamadanManager = ({ onBack }: AdminRamadanManagerProps) => {
       queryClient.invalidateQueries({ queryKey: ['ramadan-quiz-responses'] });
       toast({ title: '🔄 Calendrier réinitialisé pour tous les utilisateurs' });
     },
-    onError: () => {
-      toast({ title: 'Erreur lors de la réinitialisation', variant: 'destructive' });
+    onError: (error: any) => {
+      toast({ title: `Erreur : ${error?.message || String(error)}`, variant: 'destructive' });
     },
   });
 
