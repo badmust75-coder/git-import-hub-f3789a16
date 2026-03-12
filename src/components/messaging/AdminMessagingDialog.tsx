@@ -264,8 +264,8 @@ const AdminMessagingDialog = ({ open, onOpenChange, onMessagesRead }: AdminMessa
       setSelectedConversation(conv);
 
       toast({ title: 'Message envoyé ✓' });
-    } catch {
-      toast({ title: 'Erreur', variant: 'destructive' });
+    } catch (err: any) {
+      toast({ title: 'Erreur', description: (err?.message || 'Erreur inconnue') + (err?.code ? ` | code: ${err.code}` : ''), variant: 'destructive' });
     } finally {
       setNewMsgSending(false);
     }
