@@ -7,9 +7,38 @@ import { Users, BookMarked, Moon, Sparkles, Hand, BookOpen, Bell, Send } from 'l
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 
+const TITLE_TO_DEVOIR_TYPE: Record<string, string> = {
+  'Sourates': 'sourate',
+  'Nourania': 'nourania',
+  'Invocations': 'recitation',
+};
+
 const AdminDashboard = () => {
   const { toast } = useToast();
   const [testingSend, setTestingSend] = useState(false);
+
+  const { data: homeworkBadges = {} } = useQuery({
+    queryKey: ['admin-homework-badges'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('devoirs_rendus')
+        .select('devoir_id, statut')
+        .eq('statut', 'rendu');
+      if (!data?.length) return {};
+      const devoirIds = [...new Set(data.map(r => r.devoir_id).filter(Boolean))];
+      if (!devoirIds.length) return {};
+      const { data: devoirs } = await supabase
+        .from('devoirs')
+        .select('id, type')
+        .in('id', devoirIds);
+      const counts: Record<string, number> = {};
+      data.forEach((r: any) => {
+        const type = devoirs?.find((d: any) => d.id === r.devoir_id)?.type;
+        if (type) counts[type] = (counts[type] || 0) + 1;
+      });
+      return counts;
+    },
+  });
 
   const handleTestPush = async () => {
     setTestingSend(true);
@@ -148,7 +177,16 @@ const AdminDashboard = () => {
         {moduleCards.map((card) => {
           const Icon = card.icon;
           return (
-            <Card key={card.title} className="overflow-hidden">
+            <Card key={card.title} className="overflow-hidden relative">
+              {(() => {
+                const devoirType = TITLE_TO_DEVOIR_TYPE[card.title];
+                const count = devoirType ? (homeworkBadges as Record<string, number>)[devoirType] || 0 : 0;
+                return count > 0 ? (
+                  <span className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs font-bold min-w-5 h-5 px-1 rounded-full flex items-center justify-center z-10 shadow">
+                    {count}
+                  </span>
+                ) : null;
+              })()}
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <div className={`p-2 rounded-lg ${card.bgColor}`}>
