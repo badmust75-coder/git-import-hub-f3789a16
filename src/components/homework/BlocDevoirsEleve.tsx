@@ -248,10 +248,26 @@ export default function BlocDevoirsEleve() {
       return;
     }
 
+    // Notify admins
+    const { data: adminRoles } = await supabase
+      .from('user_roles')
+      .select('user_id')
+      .eq('role', 'admin');
+
+    const adminIds = adminRoles?.map((r: any) => r.user_id) || [];
+    const devoir = devoirs.find(d => d.id === devoirId);
+
+    if (adminIds.length > 0) {
+      sendPushNotification({
+        userIds: adminIds,
+        title: '📚 Devoir rendu',
+        body: `${user.user_metadata?.full_name || 'Un élève'} a rendu : ${devoir?.titre || 'un devoir'}`,
+      });
+    }
+
     toast.success('🎉 Devoir rendu avec succès !');
-    const rendu = devoirs.find(d => d.id === devoirId);
     setDevoirs(prev => prev.filter(d => d.id !== devoirId));
-    if (rendu) setDevoirsTermines(prev => [{ ...rendu, rendu: true }, ...prev]);
+    if (devoir) setDevoirsTermines(prev => [{ ...devoir, rendu: true }, ...prev]);
   };
 
   if (loading || (devoirs.length === 0 && devoirsTermines.length === 0)) return null;
