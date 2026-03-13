@@ -177,7 +177,16 @@ const AdminDashboard = () => {
         {moduleCards.map((card) => {
           const Icon = card.icon;
           return (
-            <Card key={card.title} className="overflow-hidden">
+            <Card key={card.title} className="overflow-hidden relative">
+              {(() => {
+                const devoirType = TITLE_TO_DEVOIR_TYPE[card.title];
+                const count = devoirType ? (homeworkBadges as Record<string, number>)[devoirType] || 0 : 0;
+                return count > 0 ? (
+                  <span className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-xs font-bold min-w-5 h-5 px-1 rounded-full flex items-center justify-center z-10 shadow">
+                    {count}
+                  </span>
+                ) : null;
+              })()}
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <div className={`p-2 rounded-lg ${card.bgColor}`}>
