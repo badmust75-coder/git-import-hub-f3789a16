@@ -7,9 +7,38 @@ import { Users, BookMarked, Moon, Sparkles, Hand, BookOpen, Bell, Send } from 'l
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 
+const TITLE_TO_DEVOIR_TYPE: Record<string, string> = {
+  'Sourates': 'sourate',
+  'Nourania': 'nourania',
+  'Invocations': 'recitation',
+};
+
 const AdminDashboard = () => {
   const { toast } = useToast();
   const [testingSend, setTestingSend] = useState(false);
+
+  const { data: homeworkBadges = {} } = useQuery({
+    queryKey: ['admin-homework-badges'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('devoirs_rendus')
+        .select('devoir_id, statut')
+        .eq('statut', 'rendu');
+      if (!data?.length) return {};
+      const devoirIds = [...new Set(data.map(r => r.devoir_id).filter(Boolean))];
+      if (!devoirIds.length) return {};
+      const { data: devoirs } = await supabase
+        .from('devoirs')
+        .select('id, type')
+        .in('id', devoirIds);
+      const counts: Record<string, number> = {};
+      data.forEach((r: any) => {
+        const type = devoirs?.find((d: any) => d.id === r.devoir_id)?.type;
+        if (type) counts[type] = (counts[type] || 0) + 1;
+      });
+      return counts;
+    },
+  });
 
   const handleTestPush = async () => {
     setTestingSend(true);
