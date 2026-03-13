@@ -14,7 +14,8 @@ type Devoir = {
   lien_lecon?: string;
   date_limite?: string;
   rendu?: boolean;
-  statut?: string; // 'rendu' | 'corrige'
+  statut?: string; // 'rendu' | 'corrige' | 'a_refaire'
+  commentaire_admin?: string;
 };
 
 function CarteDevoir({ devoir, onRendu }: { devoir: Devoir; onRendu: (id: string, audioBlob: Blob) => void }) {
