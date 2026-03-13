@@ -378,7 +378,17 @@ serve(async (req) => {
         sent: successCount,
         total: subscriptions.length,
         cleaned: expiredEndpoints.length,
-        errors: errorsArray
+        errors: errorsArray,
+        debug: {
+          bodyRecu: { userId, userIds, sendToAll },
+          targetIds,
+          subscriptionsFound: subscriptions.map(s => ({
+            user_id: s.user_id?.slice(0, 8),
+            is_active: s.is_active,
+            hasP256dh: !!s.p256dh,
+            hasAuthKey: !!s.auth_key
+          }))
+        }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
