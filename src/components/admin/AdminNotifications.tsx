@@ -192,7 +192,7 @@ const AdminNotifications = () => {
             ) : (
               abonnements.map((a, i) => (
                 <div key={i} className="border-b py-2 text-sm">
-                  <p>👤 {a.user_id?.slice(0, 8)}...</p>
+                  <p>👤 {a.user_id?.slice(0, 8)}... — <span className="font-semibold">{a.role}</span></p>
                   <p>✅ Actif : {a.is_active ? 'oui' : 'non'}</p>
                   <p>🔑 p256dh : {a.p256dh?.slice(0, 10)}...</p>
                   <p>🔐 auth : {a.auth_key?.slice(0, 10)}...</p>
