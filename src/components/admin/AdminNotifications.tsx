@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { Bell, Send, Users, Moon, Clock, TestTube } from 'lucide-react';
+import { Bell, Send, Users, Moon, Clock, TestTube, ChevronUp, ChevronDown } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -33,6 +33,51 @@ const AdminNotifications = () => {
   const [notificationBody, setNotificationBody] = useState('');
   const [notificationType, setNotificationType] = useState<'all' | 'prayer' | 'ramadan'>('all');
   const [testSending, setTestSending] = useState(false);
+
+  // État pour statut notifications élèves
+  const [elevesStatut, setElevesStatut] = useState<any[]>([]);
+  const [showStatuts, setShowStatuts] = useState(false);
+  const [envoiIndividuel, setEnvoiIndividuel] = useState('');
+
+  useEffect(() => { chargerStatutsEleves(); }, []);
+
+  const chargerStatutsEleves = async () => {
+    const { data: profils } = await supabase
+      .from('profiles')
+      .select('user_id, full_name')
+      .eq('is_approved', true);
+
+    const ids = (profils || []).map(p => p.user_id);
+    if (!ids.length) { setElevesStatut([]); return; }
+
+    const { data: subs } = await supabase
+      .from('push_subscriptions')
+      .select('user_id, is_active')
+      .in('user_id', ids);
+
+    const enrichis = (profils || []).map(p => ({
+      id: p.user_id,
+      full_name: p.full_name || 'Sans nom',
+      notifActive: subs?.some(s => s.user_id === p.user_id && s.is_active) || false,
+    }));
+    setElevesStatut(enrichis.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '')));
+  };
+
+  const handleRenvoyerInvitation = async (userId?: string) => {
+    const cibles = userId ? [userId] : elevesStatut.map(e => e.id);
+    try {
+      await supabase.functions.invoke('send-push-notification', {
+        body: {
+          userIds: cibles,
+          title: '🔔 Activez vos notifications',
+          body: "Ouvrez l'application et activez les notifications pour ne rien manquer !",
+        },
+      });
+      toast({ title: `📢 Invitation envoyée à ${cibles.length} élève(s)` });
+    } catch (e: any) {
+      toast({ title: 'Erreur', description: e.message, variant: 'destructive' });
+    }
+  };
 
   const handleTestAdmin = async () => {
     if (!user) return;
