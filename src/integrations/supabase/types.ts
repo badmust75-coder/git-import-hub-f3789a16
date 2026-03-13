@@ -369,6 +369,97 @@ export type Database = {
         }
         Relationships: []
       }
+      devoirs: {
+        Row: {
+          assigned_to: string
+          created_at: string | null
+          created_by: string | null
+          date_limite: string | null
+          description: string | null
+          fichier_pdf_url: string | null
+          group_id: string | null
+          id: string
+          lien_lecon: string | null
+          student_id: string | null
+          titre: string
+          type: string
+        }
+        Insert: {
+          assigned_to: string
+          created_at?: string | null
+          created_by?: string | null
+          date_limite?: string | null
+          description?: string | null
+          fichier_pdf_url?: string | null
+          group_id?: string | null
+          id?: string
+          lien_lecon?: string | null
+          student_id?: string | null
+          titre: string
+          type: string
+        }
+        Update: {
+          assigned_to?: string
+          created_at?: string | null
+          created_by?: string | null
+          date_limite?: string | null
+          description?: string | null
+          fichier_pdf_url?: string | null
+          group_id?: string | null
+          id?: string
+          lien_lecon?: string | null
+          student_id?: string | null
+          titre?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devoirs_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "student_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      devoirs_rendus: {
+        Row: {
+          audio_url: string | null
+          commentaire_admin: string | null
+          devoir_id: string | null
+          id: string
+          rendu_at: string | null
+          statut: string | null
+          student_id: string
+        }
+        Insert: {
+          audio_url?: string | null
+          commentaire_admin?: string | null
+          devoir_id?: string | null
+          id?: string
+          rendu_at?: string | null
+          statut?: string | null
+          student_id: string
+        }
+        Update: {
+          audio_url?: string | null
+          commentaire_admin?: string | null
+          devoir_id?: string | null
+          id?: string
+          rendu_at?: string | null
+          statut?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devoirs_rendus_devoir_id_fkey"
+            columns: ["devoir_id"]
+            isOneToOne: false
+            referencedRelation: "devoirs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       homework_assignments: {
         Row: {
           audio_url: string | null
