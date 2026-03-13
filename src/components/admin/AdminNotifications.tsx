@@ -144,16 +144,22 @@ const AdminNotifications = () => {
   const [showAbo, setShowAbo] = useState(false);
 
   const handleVoirAbonnements = async () => {
-    const { data, error } = await supabase
-      .from('push_subscriptions')
-      .select('user_id, endpoint, p256dh, auth_key, is_active, created_at')
-      .order('created_at', { ascending: false });
+    const [{ data, error }, { data: roles }] = await Promise.all([
+      supabase
+        .from('push_subscriptions')
+        .select('user_id, endpoint, p256dh, auth_key, is_active, created_at')
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('user_roles')
+        .select('user_id, role'),
+    ]);
 
     if (error) {
       toast({ title: 'Erreur: ' + error.message, variant: 'destructive' });
       return;
     }
-    setAbonnements(data || []);
+    const roleMap = new Map((roles || []).map((r: any) => [r.user_id, r.role]));
+    setAbonnements((data || []).map((a: any) => ({ ...a, role: roleMap.get(a.user_id) || '—' })));
     setShowAbo(true);
   };
 
@@ -186,7 +192,7 @@ const AdminNotifications = () => {
             ) : (
               abonnements.map((a, i) => (
                 <div key={i} className="border-b py-2 text-sm">
-                  <p>👤 {a.user_id?.slice(0, 8)}...</p>
+                  <p>👤 {a.user_id?.slice(0, 8)}... — <span className="font-semibold">{a.role}</span></p>
                   <p>✅ Actif : {a.is_active ? 'oui' : 'non'}</p>
                   <p>🔑 p256dh : {a.p256dh?.slice(0, 10)}...</p>
                   <p>🔐 auth : {a.auth_key?.slice(0, 10)}...</p>
