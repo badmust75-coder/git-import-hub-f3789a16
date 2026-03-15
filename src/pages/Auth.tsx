@@ -386,22 +386,53 @@ const Auth = () => {
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
+                    <div className="space-y-2">
                     <Label htmlFor="signup-password">Mot de passe</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="signup-password"
-                        type="password"
+                        type={showSignupPassword ? 'text' : 'password'}
                         placeholder="••••••••"
                         value={signupPassword}
-                        onChange={(e) => setSignupPassword(e.target.value)}
-                        className="pl-10"
+                        onChange={(e) => { setSignupPassword(e.target.value); setPasswordError(''); }}
+                        className="pl-10 pr-10"
                         required
                         minLength={6}
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowSignupPassword(!showSignupPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                      >
+                        {showSignupPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
                     </div>
                     <p className="text-xs text-muted-foreground">Minimum 6 caractères</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password-confirm">Confirmer le mot de passe</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="signup-password-confirm"
+                        type={showSignupPasswordConfirm ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        value={signupPasswordConfirm}
+                        onChange={(e) => { setSignupPasswordConfirm(e.target.value); setPasswordError(''); }}
+                        className={`pl-10 pr-10 ${passwordError ? 'border-destructive' : ''}`}
+                        required
+                        minLength={6}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowSignupPasswordConfirm(!showSignupPasswordConfirm)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                      >
+                        {showSignupPasswordConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {passwordError && <p className="text-xs text-destructive">{passwordError}</p>}
                   </div>
                   <Button type="submit" className="w-full bg-primary hover:bg-royal-dark" disabled={loading}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
