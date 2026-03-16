@@ -249,8 +249,8 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Homework Card */}
-          <HomeworkCard />
+          {/* Homework Card - only for admin */}
+          {isAdmin && <HomeworkCard />}
           <BlocDevoirsEleve />
 
           {/* Module Cards Grid - Dynamic from DB */}
