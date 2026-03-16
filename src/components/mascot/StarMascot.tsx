@@ -383,7 +383,6 @@ Clique sur n'importe quel module pour commencer !
     }
   }, [isDragging, dragOffset]);
 
-  const { isAdmin } = useAuth();
   if (!user || isAdmin) return null;
 
   return (
