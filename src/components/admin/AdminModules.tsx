@@ -409,7 +409,7 @@ const AdminModules = ({ onBack }: AdminModulesProps) => {
 
       {/* Add Content Dialog */}
       <Dialog open={contentDialogOpen} onOpenChange={setContentDialogOpen}>
-        <DialogContent>
+        <DialogContent level="nested">
           <DialogHeader>
             <DialogTitle>Ajouter du contenu à {selectedModule?.title}</DialogTitle>
           </DialogHeader>

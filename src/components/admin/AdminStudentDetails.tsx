@@ -316,7 +316,7 @@ const AdminStudentDetails = ({ onBack }: AdminStudentDetailsProps) => {
 
       {/* DOB dialog */}
       <Dialog open={!!dobDialogStudent} onOpenChange={() => setDobDialogStudent(null)}>
-        <DialogContent className="max-w-xs rounded-2xl">
+        <DialogContent className="max-w-xs rounded-2xl" level="nested">
           <DialogHeader>
             <DialogTitle>📅 Date de naissance</DialogTitle>
           </DialogHeader>
