@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -27,40 +28,24 @@ const StarMascot = () => {
   const { user, isAdmin } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: progress } = useUserProgress();
   
-  const starRef = useRef<HTMLButtonElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [position, setPosition] = useState(() => {
-    // Safe initialization - avoid accessing window during SSR
-    if (typeof window === 'undefined') {
-      return { x: 0, y: 0 };
-    }
-    
-    try {
-      const saved = localStorage.getItem('starMascot-position');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return {
-          x: Math.max(0, Math.min(parsed.x || 0, window.innerWidth - 80)),
-          y: Math.max(0, Math.min(parsed.y || 0, window.innerHeight - 120))
-        };
-      }
-    } catch (error) {
-      console.warn('Failed to load mascot position:', error);
-    }
-    
-    return { 
-      x: Math.max(0, window.innerWidth - 80), 
-      y: Math.max(0, window.innerHeight - 120) 
-    };
-  });
+  const isDraggingBtn = useRef(false);
+  const startTouch = useRef({ x: 0, y: 0 });
+  const startPos = useRef({ x: 0, y: 0 });
+
+  const [pos, setPos] = useState({ x: 16, y: typeof window !== 'undefined' ? window.innerHeight - 80 : 0 });
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [userAge, setUserAge] = useState<number | null>(null);
+
+  // Reset position on route change
+  useEffect(() => {
+    setPos({ x: 16, y: window.innerHeight - 80 });
+  }, [location.pathname]);
 
   // Get user age from profile and set up window resize handler
   useEffect(() => {
@@ -86,10 +71,9 @@ const StarMascot = () => {
     };
 
     const handleResize = () => {
-      // Keep star within bounds on window resize
-      setPosition(prev => ({
-        x: Math.min(prev.x, window.innerWidth - 64),
-        y: Math.min(prev.y, window.innerHeight - 64)
+      setPos(prev => ({
+        x: Math.min(prev.x, window.innerWidth - 48),
+        y: Math.min(prev.y, window.innerHeight - 48)
       }));
     };
 
@@ -97,17 +81,6 @@ const StarMascot = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [user]);
-
-  // Save position to localStorage when it changes
-  useEffect(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('starMascot-position', JSON.stringify(position));
-      }
-    } catch (error) {
-      console.warn('Failed to save mascot position:', error);
-    }
-  }, [position]);
 
   // Welcome message when opening
   useEffect(() => {
@@ -309,100 +282,69 @@ Clique sur n'importe quel module pour commencer !
     return getEncouragementMessage();
   };
 
-  // Drag handlers
-  const handleDragStart = (clientX: number, clientY: number) => {
-    if (!starRef.current) return;
-    
-    setIsDragging(true);
-    const rect = starRef.current.getBoundingClientRect();
-    setDragOffset({
-      x: clientX - rect.left,
-      y: clientY - rect.top
+  // Touch events
+  const handleTouchStart = (e: React.TouchEvent) => {
+    isDraggingBtn.current = false;
+    startTouch.current = { x: e.touches[0].clientX - pos.x, y: e.touches[0].clientY - pos.y };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    isDraggingBtn.current = true;
+    setPos({
+      x: Math.max(0, Math.min(window.innerWidth - 48, e.touches[0].clientX - startTouch.current.x)),
+      y: Math.max(0, Math.min(window.innerHeight - 48, e.touches[0].clientY - startTouch.current.y))
     });
   };
 
-  const handleDragMove = (clientX: number, clientY: number) => {
-    if (!isDragging) return;
-    
-    const newX = Math.max(0, Math.min(clientX - dragOffset.x, window.innerWidth - 64));
-    const newY = Math.max(0, Math.min(clientY - dragOffset.y, window.innerHeight - 64));
-    
-    setPosition({ x: newX, y: newY });
-  };
-
-  const handleDragEnd = () => {
-    setIsDragging(false);
+  const handleTouchEnd = () => {
+    if (!isDraggingBtn.current) setIsOpen(true);
+    isDraggingBtn.current = false;
   };
 
   // Mouse events
   const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    handleDragStart(e.clientX, e.clientY);
+    isDraggingBtn.current = false;
+    startPos.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
+    const onMove = (ev: MouseEvent) => {
+      isDraggingBtn.current = true;
+      setPos({
+        x: Math.max(0, Math.min(window.innerWidth - 48, ev.clientX - startPos.current.x)),
+        y: Math.max(0, Math.min(window.innerHeight - 48, ev.clientY - startPos.current.y))
+      });
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      if (!isDraggingBtn.current) setIsOpen(true);
+      isDraggingBtn.current = false;
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
   };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    handleDragMove(e.clientX, e.clientY);
-  };
-
-  const handleMouseUp = () => {
-    handleDragEnd();
-  };
-
-  // Touch events
-  const handleTouchStart = (e: React.TouchEvent) => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    handleDragStart(touch.clientX, touch.clientY);
-  };
-
-  const handleTouchMove = (e: TouchEvent) => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    handleDragMove(touch.clientX, touch.clientY);
-  };
-
-  const handleTouchEnd = (e: TouchEvent) => {
-    e.preventDefault();
-    handleDragEnd();
-  };
-
-  // Add global event listeners for drag
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.addEventListener('touchmove', handleTouchMove, { passive: false });
-      document.addEventListener('touchend', handleTouchEnd, { passive: false });
-      
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        document.removeEventListener('touchmove', handleTouchMove);
-        document.removeEventListener('touchend', handleTouchEnd);
-      };
-    }
-  }, [isDragging, dragOffset]);
 
   if (!user || isAdmin) return null;
 
   return (
     <>
       {/* Draggable Floating Star Button */}
-      <Button
-        ref={starRef}
-        onMouseDown={handleMouseDown}
+      <button
         onTouchStart={handleTouchStart}
-        onClick={() => !isDragging && setIsOpen(true)}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onClick={(e) => { if (isDraggingBtn.current) e.preventDefault(); }}
         style={{
-          left: `${position.x}px`,
-          top: `${position.y}px`,
-          cursor: isDragging ? 'grabbing' : 'grab',
+          position: 'fixed',
+          left: pos.x,
+          top: pos.y,
+          zIndex: 40,
           touchAction: 'none',
+          cursor: 'grab',
         }}
-        className="fixed z-50 w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-500 hover:from-yellow-300 hover:via-yellow-400 hover:to-amber-400 shadow-lg hover:shadow-xl transition-all duration-300 p-0 group"
+        className="w-10 h-10 rounded-full shadow-md flex items-center justify-center transition-shadow hover:shadow-lg select-none bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-500"
       >
-        <Star className="h-8 w-8 text-white drop-shadow-md group-hover:scale-110 transition-transform animate-pulse pointer-events-none" />
-      </Button>
+        <span style={{ fontSize: '18px', lineHeight: 1 }}>⭐</span>
+      </button>
 
       {/* Mascot Dialog */}
       {isOpen && (

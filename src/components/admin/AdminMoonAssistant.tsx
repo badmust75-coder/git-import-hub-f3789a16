@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -27,26 +28,14 @@ interface Conversation {
 const AdminMoonAssistant = () => {
   const { isAdmin, user } = useAuth();
   const { toast } = useToast();
+  const location = useLocation();
 
-  const moonRef = useRef<HTMLButtonElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [hasMoved, setHasMoved] = useState(false);
-  const [position, setPosition] = useState(() => {
-    if (typeof window === 'undefined') return { x: 0, y: 0 };
-    try {
-      const saved = localStorage.getItem('adminMoon-position');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return {
-          x: Math.max(0, Math.min(parsed.x || 0, window.innerWidth - 80)),
-          y: Math.max(0, Math.min(parsed.y || 0, window.innerHeight - 120))
-        };
-      }
-    } catch {}
-    return { x: 16, y: Math.max(0, window.innerHeight - 120) };
-  });
+  const isDraggingBtn = useRef(false);
+  const startTouch = useRef({ x: 0, y: 0 });
+  const startPos = useRef({ x: 0, y: 0 });
+
+  const [pos, setPos] = useState({ x: 16, y: typeof window !== 'undefined' ? window.innerHeight - 80 : 0 });
   const [isOpen, setIsOpen] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -58,11 +47,10 @@ const AdminMoonAssistant = () => {
 
   const activeConversation = conversations.find(c => c.id === activeConversationId);
 
+  // Reset position on route change
   useEffect(() => {
-    try {
-      localStorage.setItem('adminMoon-position', JSON.stringify(position));
-    } catch {}
-  }, [position]);
+    setPos({ x: 16, y: window.innerHeight - 80 });
+  }, [location.pathname]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -184,29 +172,44 @@ const AdminMoonAssistant = () => {
     setShowConversationList(false);
   };
 
-  // Drag handlers
-  const handlePointerDown = (e: React.PointerEvent) => {
-    if (!moonRef.current) return;
-    const rect = moonRef.current.getBoundingClientRect();
-    setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-    setIsDragging(true);
-    setHasMoved(false);
-    moonRef.current.setPointerCapture(e.pointerId);
+  // Touch events
+  const handleTouchStart = (e: React.TouchEvent) => {
+    isDraggingBtn.current = false;
+    startTouch.current = { x: e.touches[0].clientX - pos.x, y: e.touches[0].clientY - pos.y };
   };
 
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging) return;
-    setHasMoved(true);
-    const newX = Math.max(0, Math.min(e.clientX - dragOffset.x, window.innerWidth - 56));
-    const newY = Math.max(0, Math.min(e.clientY - dragOffset.y, window.innerHeight - 56));
-    setPosition({ x: newX, y: newY });
+  const handleTouchMove = (e: React.TouchEvent) => {
+    isDraggingBtn.current = true;
+    setPos({
+      x: Math.max(0, Math.min(window.innerWidth - 48, e.touches[0].clientX - startTouch.current.x)),
+      y: Math.max(0, Math.min(window.innerHeight - 48, e.touches[0].clientY - startTouch.current.y))
+    });
   };
 
-  const handlePointerUp = () => {
-    setIsDragging(false);
-    if (!hasMoved) {
-      setIsOpen(prev => !prev);
-    }
+  const handleTouchEnd = () => {
+    if (!isDraggingBtn.current) setIsOpen(prev => !prev);
+    isDraggingBtn.current = false;
+  };
+
+  // Mouse events
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isDraggingBtn.current = false;
+    startPos.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
+    const onMove = (ev: MouseEvent) => {
+      isDraggingBtn.current = true;
+      setPos({
+        x: Math.max(0, Math.min(window.innerWidth - 48, ev.clientX - startPos.current.x)),
+        y: Math.max(0, Math.min(window.innerHeight - 48, ev.clientY - startPos.current.y))
+      });
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      if (!isDraggingBtn.current) setIsOpen(prev => !prev);
+      isDraggingBtn.current = false;
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
   };
 
   const generateTopicFromMessages = (msgs: Message[]): string => {
@@ -343,19 +346,22 @@ const AdminMoonAssistant = () => {
     <>
       {/* Floating Moon Button */}
       <button
-        ref={moonRef}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        className="fixed z-40 w-10 h-10 rounded-full flex items-center justify-center shadow-md select-none touch-none transition-all hover:scale-105 active:scale-95"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onClick={(e) => { if (isDraggingBtn.current) e.preventDefault(); }}
         style={{
-          left: `${position.x}px`,
-          top: `${position.y}px`,
+          position: 'fixed',
+          left: pos.x,
+          top: pos.y,
+          zIndex: 40,
+          touchAction: 'none',
+          cursor: 'grab',
           backgroundColor: '#1a1a2e',
           border: '1px solid rgba(255,255,255,0.15)',
-          transform: isDragging ? 'scale(1.15)' : undefined,
-          cursor: isDragging ? 'grabbing' : 'pointer',
         }}
+        className="w-10 h-10 rounded-full shadow-md flex items-center justify-center transition-shadow hover:shadow-lg select-none"
         aria-label="Assistant Admin"
       >
         <span style={{ fontSize: '18px', lineHeight: 1, filter: 'drop-shadow(0 0 4px rgba(200,180,255,0.6))' }}>🌙</span>
