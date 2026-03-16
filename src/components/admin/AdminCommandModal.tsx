@@ -280,7 +280,7 @@ function AdminSectionRenderer({
     case 'eleves':
       return <AdminStudents />;
     case 'registre-presence':
-      return <AdminAttendance />;
+      return <AdminAttendance onBack={onClose} />;
     case 'dictionnaire':
       return (
         <p className="text-muted-foreground text-center py-8">
