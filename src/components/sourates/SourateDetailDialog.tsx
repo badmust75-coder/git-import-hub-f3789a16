@@ -328,7 +328,11 @@ const SourateDetailDialog = ({
             </div>
           )}
 
-          {/* Resources */}
+          {/* Vidéo YouTube */}
+          {videoUrl && (
+            <LecteurVideoSourate videoUrl={videoUrl} />
+          )}
+
           {contents.length > 0 && (
             <div className="space-y-2">
               <p className="text-sm font-medium text-foreground">Ressources</p>
