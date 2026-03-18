@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,8 +19,7 @@ const FastingTracker = () => {
       const { data, error } = await supabase
         .from('user_ramadan_fasting')
         .select('*')
-        .eq('user_id', user.id)
-        .eq('has_fasted', true);
+        .eq('user_id', user.id);
       if (error) throw error;
       return data;
     },
@@ -27,7 +27,7 @@ const FastingTracker = () => {
   });
 
   useEffect(() => {
-    setJoursJeunes(fastingData.map(f => f.day_number));
+    setJoursJeunes(fastingData.filter(f => f.has_fasted).map(f => f.day_number));
   }, [fastingData]);
 
   const handleClickJour = async (dayNumber: number) => {
@@ -37,32 +37,48 @@ const FastingTracker = () => {
     if (dejaJeune) {
       // Optimistic remove
       setJoursJeunes(prev => prev.filter(d => d !== dayNumber));
-      const { error } = await supabase
-        .from('user_ramadan_fasting')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('day_number', dayNumber);
-      if (error) {
-        toast.error('Erreur: ' + error.message);
-        setJoursJeunes(prev => [...prev, dayNumber]);
-        return;
+      const existing = fastingData.find(f => f.day_number === dayNumber);
+      if (existing) {
+        const { error } = await supabase
+          .from('user_ramadan_fasting')
+          .update({ has_fasted: false } as any)
+          .eq('id', existing.id);
+        if (error) {
+          toast.error('Erreur: ' + error.message);
+          setJoursJeunes(prev => [...prev, dayNumber]);
+        }
       }
     } else {
       // Optimistic add
       setJoursJeunes(prev => [...prev, dayNumber]);
-      const { error } = await (supabase as any)
-        .from('user_ramadan_fasting')
-        .upsert({
-          user_id: user.id,
-          day_number: dayNumber,
-          has_fasted: true,
-          date: new Date().toISOString().split('T')[0],
-        }, { onConflict: 'user_id,day_number' });
-      if (error) {
-        toast.error('Erreur: ' + error.message);
-        setJoursJeunes(prev => prev.filter(d => d !== dayNumber));
-        return;
+
+      const existing = fastingData.find(f => f.day_number === dayNumber);
+      if (existing) {
+        const { error } = await supabase
+          .from('user_ramadan_fasting')
+          .update({ has_fasted: true } as any)
+          .eq('id', existing.id);
+        if (error) {
+          toast.error('Erreur: ' + error.message);
+          setJoursJeunes(prev => prev.filter(d => d !== dayNumber));
+          return;
+        }
+      } else {
+        const { error } = await (supabase as any)
+          .from('user_ramadan_fasting')
+          .insert({
+            user_id: user.id,
+            day_number: dayNumber,
+            has_fasted: true,
+            date: new Date().toISOString().split('T')[0],
+          });
+        if (error) {
+          toast.error('Erreur: ' + error.message);
+          setJoursJeunes(prev => prev.filter(d => d !== dayNumber));
+          return;
+        }
       }
+
       // Confettis
       confetti({
         particleCount: 80,
@@ -91,29 +107,33 @@ const FastingTracker = () => {
               key={day}
               onClick={() => handleClickJour(day)}
               className="relative flex flex-col items-center justify-center w-full aspect-square transition-all active:scale-90"
+              title={`Jour ${day} - ${jeune ? 'Jeûné ✓' : 'Cliquer pour marquer'}`}
             >
-              <span style={{
-                fontSize: '20px',
-                filter: jeune ? 'none' : 'grayscale(100%) opacity(0.4)',
-                transition: 'filter 0.2s',
-              }}>
-                ⭐
+              <Star
+                className="w-5 h-5 sm:w-6 sm:h-6 transition-all duration-200"
+                style={{
+                  fill: jeune ? '#f59e0b' : 'none',
+                  stroke: jeune ? '#f59e0b' : '#d1d5db',
+                  strokeWidth: 2,
+                }}
+              />
+              <span
+                className="text-[9px] font-bold"
+                style={{ color: jeune ? '#f59e0b' : '#9ca3af' }}
+              >
+                {day}
               </span>
-              <span className={cn(
-                "text-[9px] font-bold",
-                jeune ? 'text-amber-500' : 'text-muted-foreground',
-              )}>{day}</span>
             </button>
           );
         })}
       </div>
       <div className="flex flex-wrap gap-3 justify-center text-[10px] text-muted-foreground">
         <div className="flex items-center gap-1">
-          <span style={{ fontSize: '12px' }}>⭐</span>
+          <Star className="h-3 w-3" style={{ fill: '#f59e0b', stroke: '#f59e0b' }} />
           <span>Jeûné</span>
         </div>
         <div className="flex items-center gap-1">
-          <span style={{ fontSize: '12px', filter: 'grayscale(100%) opacity(0.4)' }}>⭐</span>
+          <Star className="h-3 w-3" style={{ fill: 'none', stroke: '#d1d5db' }} />
           <span>À marquer</span>
         </div>
       </div>
