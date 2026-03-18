@@ -37,6 +37,18 @@ const SourateDetailDialog = ({
   onVerseToggle,
 }: SourateDetailDialogProps) => {
   const { verses, loading: versesLoading } = useQuranVerses(open ? sourate.number : null);
+  const [versetsAudio, setVersetsAudio] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (open && dbId) {
+      supabase
+        .from('sourate_versets_audio' as any)
+        .select('*')
+        .eq('sourate_id', dbId)
+        .order('verset_number', { ascending: true })
+        .then(({ data }) => setVersetsAudio(data || []));
+    }
+  }, [open, dbId]);
 
   if (!dbId) return null;
 
