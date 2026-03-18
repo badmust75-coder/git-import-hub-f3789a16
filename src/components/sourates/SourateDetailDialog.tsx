@@ -254,7 +254,6 @@ const SourateDetailDialog = ({
 }: SourateDetailDialogProps) => {
   const { verses, loading: versesLoading } = useQuranVerses(open ? sourate.number : null);
   const [versetsAudio, setVersetsAudio] = useState<any[]>([]);
-  const [audioCompletUrl, setAudioCompletUrl] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   useEffect(() => {
     if (open && dbId) {
@@ -267,11 +266,10 @@ const SourateDetailDialog = ({
 
       supabase
         .from('sourates')
-        .select('audio_complet_url, video_url' as any)
+        .select('video_url' as any)
         .eq('id', dbId)
-        .single()
+        .maybeSingle()
         .then(({ data }) => {
-          setAudioCompletUrl((data as any)?.audio_complet_url || null);
           setVideoUrl((data as any)?.video_url || null);
         });
     }
