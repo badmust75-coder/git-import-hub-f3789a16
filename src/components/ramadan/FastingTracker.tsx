@@ -100,41 +100,63 @@ const FastingTracker = () => {
         <span className="text-sm font-semibold text-foreground">Suivi du Jeûne 🌙</span>
         <span className="text-xs text-muted-foreground">{fastedCount}/30 jours jeûnés</span>
       </div>
-      <div className="grid grid-cols-10 gap-1.5 p-2">
+      <div className="grid grid-cols-10 gap-1">
         {Array.from({ length: 30 }, (_, i) => i + 1).map(day => {
           const jeune = joursJeunes.includes(day);
           return (
             <button
               key={day}
               onClick={() => handleClickJour(day)}
-              className="relative flex items-center justify-center w-8 h-8 rounded-full transition-all active:scale-90"
-              style={{
-                backgroundColor: jeune ? '#22c55e' : 'transparent',
+              className="flex items-center justify-center transition-all active:scale-90"
+              style={{ 
+                width: '28px', 
+                height: '28px',
+                background: 'none',
+                border: 'none',
+                padding: 0
               }}
-              title={`Jour ${day} - ${jeune ? 'Jeûné ✓' : 'Cliquer pour marquer'}`}
             >
-              {/* Star */}
-              <span style={{ fontSize: '28px', lineHeight: 1 }}>
-                {jeune ? '⭐' : '☆'}
-              </span>
-              {/* Number centered inside */}
-              <span className="absolute inset-0 flex items-center justify-center" style={{
-                fontSize: '9px',
-                fontWeight: 800,
-                color: jeune ? '#fff' : '#4b5563',
-              }}>
-                {day}
-              </span>
+              <svg 
+                viewBox="0 0 24 24" 
+                width="28" 
+                height="28"
+              >
+                <polygon
+                  points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+                  fill={jeune ? '#22c55e' : '#e5e7eb'}
+                  stroke={jeune ? '#16a34a' : '#d1d5db'}
+                  strokeWidth="1"
+                />
+                <text
+                  x="12"
+                  y="14"
+                  textAnchor="middle"
+                  fontSize={day >= 10 ? "5.5" : "6.5"}
+                  fontWeight="bold"
+                  fill={jeune ? '#ffffff' : '#374151'}
+                  fontFamily="Arial, sans-serif"
+                >
+                  {day}
+                </text>
+              </svg>
             </button>
           );
         })}
       </div>
       <div className="flex justify-center gap-4 mt-2 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
-          <span style={{ fontSize: '14px' }}>⭐</span> Jeûné
+          <svg viewBox="0 0 24 24" width="14" height="14">
+            <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+              fill="#22c55e" stroke="#16a34a" strokeWidth="1"/>
+          </svg>
+          Jeûné
         </span>
         <span className="flex items-center gap-1">
-          <span style={{ fontSize: '14px', color: '#9ca3af' }}>☆</span> À marquer
+          <svg viewBox="0 0 24 24" width="14" height="14">
+            <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+              fill="#e5e7eb" stroke="#d1d5db" strokeWidth="1"/>
+          </svg>
+          À marquer
         </span>
       </div>
     </div>
