@@ -254,7 +254,6 @@ const SourateDetailDialog = ({
 }: SourateDetailDialogProps) => {
   const { verses, loading: versesLoading } = useQuranVerses(open ? sourate.number : null);
   const [versetsAudio, setVersetsAudio] = useState<any[]>([]);
-  const [audioCompletUrl, setAudioCompletUrl] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   useEffect(() => {
     if (open && dbId) {
@@ -267,11 +266,10 @@ const SourateDetailDialog = ({
 
       supabase
         .from('sourates')
-        .select('audio_complet_url, video_url' as any)
+        .select('video_url' as any)
         .eq('id', dbId)
-        .single()
+        .maybeSingle()
         .then(({ data }) => {
-          setAudioCompletUrl((data as any)?.audio_complet_url || null);
           setVideoUrl((data as any)?.video_url || null);
         });
     }
@@ -318,20 +316,11 @@ const SourateDetailDialog = ({
             <Progress value={versePercentage} className="h-2" />
           </div>
 
-          {/* Audio complet */}
-          {audioCompletUrl && (
-            <div>
-              <p className="text-sm font-semibold text-foreground mb-2">
-                🎵 Écouter la sourate complète
-              </p>
-              <LecteurVerset audioUrl={audioCompletUrl} />
-            </div>
-          )}
-
           {/* Vidéo YouTube */}
           {videoUrl && (
             <LecteurVideoSourate videoUrl={videoUrl} />
           )}
+
 
           {contents.length > 0 && (
             <div className="space-y-2">
