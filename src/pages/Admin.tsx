@@ -28,6 +28,7 @@ import AdminHomework from '@/components/admin/AdminHomework';
 import AdminAttendance from '@/components/admin/AdminAttendance';
 import AdminGlobalStats from '@/components/admin/AdminGlobalStats';
 import AdminNotifications from '@/components/admin/AdminNotifications';
+import AdminContent from '@/components/admin/AdminContent';
 
 import ConfirmDeleteDialog from '@/components/ui/confirm-delete-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
