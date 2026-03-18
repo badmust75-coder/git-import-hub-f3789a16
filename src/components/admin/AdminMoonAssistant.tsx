@@ -35,7 +35,7 @@ const AdminMoonAssistant = () => {
   const startTouch = useRef({ x: 0, y: 0 });
   const startPos = useRef({ x: 0, y: 0 });
 
-  const [pos, setPos] = useState({ x: 16, y: typeof window !== 'undefined' ? window.innerHeight - 80 : 0 });
+  const [pos, setPos] = useState({ x: 16, y: typeof window !== 'undefined' ? window.innerHeight - 64 - 16 - 40 : 0 });
   const [isOpen, setIsOpen] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -49,7 +49,7 @@ const AdminMoonAssistant = () => {
 
   // Reset position on route change
   useEffect(() => {
-    setPos({ x: 16, y: window.innerHeight - 80 });
+    setPos({ x: 16, y: window.innerHeight - 64 - 16 - 40 });
   }, [location.pathname]);
 
   useEffect(() => {
@@ -357,7 +357,7 @@ const AdminMoonAssistant = () => {
           top: pos.y,
           zIndex: 40,
           touchAction: 'none',
-          cursor: 'grab',
+          
           backgroundColor: '#1a1a2e',
           border: '1px solid rgba(255,255,255,0.15)',
         }}

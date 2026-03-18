@@ -35,7 +35,7 @@ const StarMascot = () => {
   const startTouch = useRef({ x: 0, y: 0 });
   const startPos = useRef({ x: 0, y: 0 });
 
-  const [pos, setPos] = useState({ x: 16, y: typeof window !== 'undefined' ? window.innerHeight - 80 : 0 });
+  const [pos, setPos] = useState({ x: 16, y: typeof window !== 'undefined' ? window.innerHeight - 64 - 16 - 40 : 0 });
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
@@ -44,7 +44,7 @@ const StarMascot = () => {
 
   // Reset position on route change
   useEffect(() => {
-    setPos({ x: 16, y: window.innerHeight - 80 });
+    setPos({ x: 16, y: window.innerHeight - 64 - 16 - 40 });
   }, [location.pathname]);
 
   // Get user age from profile and set up window resize handler
@@ -339,7 +339,7 @@ Clique sur n'importe quel module pour commencer !
           top: pos.y,
           zIndex: 40,
           touchAction: 'none',
-          cursor: 'grab',
+          
         }}
         className="w-10 h-10 rounded-full shadow-md flex items-center justify-center transition-shadow hover:shadow-lg select-none bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-500"
       >
