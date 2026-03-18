@@ -66,6 +66,21 @@ const Nourania = () => {
     enabled: !!user?.id,
   });
 
+  // Fetch personal teacher comments
+  const { data: personalComments = [] } = useQuery({
+    queryKey: ['nourania-personal-comments', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await (supabase as any)
+        .from('nourania_commentaires_eleves')
+        .select('lecon_id, commentaire')
+        .eq('student_id', user.id);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user?.id,
+  });
+
   // Fetch user's pending validation requests
   const { data: pendingRequests = [] } = useQuery({
     queryKey: ['nourania-validation-requests', user?.id],
