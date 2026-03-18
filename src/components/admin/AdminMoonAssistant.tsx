@@ -49,7 +49,7 @@ const AdminMoonAssistant = () => {
 
   // Reset position on route change
   useEffect(() => {
-    setPos({ x: 16, y: window.innerHeight - 80 });
+    setPos({ x: 16, y: window.innerHeight - 64 - 16 - 40 });
   }, [location.pathname]);
 
   useEffect(() => {
