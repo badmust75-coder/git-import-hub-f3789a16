@@ -12,6 +12,9 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useConfetti } from '@/hooks/useConfetti';
 import NouraniaUnlockDialog from '@/components/nourania/NouraniaUnlockDialog';
+import { extractYoutubeVideoId } from '@/utils/youtube';
+import { YoutubePlayer } from '@/utils/youtube';
+import AudioPlayer from '@/components/audio/AudioPlayer';
 
 const Nourania = () => {
   const { user } = useAuth();
