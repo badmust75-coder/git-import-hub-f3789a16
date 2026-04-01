@@ -5,7 +5,7 @@ import { sendPushNotification } from '@/lib/pushHelper';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, Clock, ArrowLeft, User } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, ArrowLeft, User } from 'lucide-react';
 import { useEffect } from 'react';
 
 interface AdminNouraniaValidationsProps {
@@ -117,6 +117,39 @@ const AdminNouraniaValidations = ({ onBack }: AdminNouraniaValidationsProps) => 
     },
   });
 
+  const refuseMutation = useMutation({
+    mutationFn: async (request: any) => {
+      const { error } = await supabase
+        .from('nourania_validation_requests')
+        .update({
+          status: 'refused',
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: user?.id,
+        })
+        .eq('id', request.id);
+      if (error) throw error;
+    },
+    onSuccess: (_, request) => {
+      toast({
+        title: `❌ Leçon refusée`,
+        description: `Leçon ${request.lesson?.lesson_number || ''} refusée pour ${request.profile?.full_name || 'l\'élève'}`,
+      });
+
+      sendPushNotification({
+        title: '📖 Leçon à retravailler',
+        body: `Ton professeur t'invite à retravailler ${request.lesson?.title_french || 'ta leçon'}. Continue tes efforts !`,
+        type: 'user',
+        userId: request.user_id,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['admin-nourania-validations'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-pending-nourania-count'] });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Erreur lors du refus', description: err?.message || 'Veuillez réessayer.', variant: 'destructive' });
+    },
+  });
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4 mb-6">
@@ -166,15 +199,27 @@ const AdminNouraniaValidations = ({ onBack }: AdminNouraniaValidationsProps) => 
                       </p>
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    className="bg-green-500 hover:bg-green-600 text-white"
-                    onClick={() => approveMutation.mutate(req)}
-                    disabled={approveMutation.isPending}
-                  >
-                    <CheckCircle className="h-4 w-4 mr-1" />
-                    Valider
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-red-300 text-red-600 hover:bg-red-50"
+                      onClick={() => refuseMutation.mutate(req)}
+                      disabled={refuseMutation.isPending || approveMutation.isPending}
+                    >
+                      <XCircle className="h-4 w-4 mr-1" />
+                      Refuser
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-green-500 hover:bg-green-600 text-white"
+                      onClick={() => approveMutation.mutate(req)}
+                      disabled={approveMutation.isPending || refuseMutation.isPending}
+                    >
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      Valider
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -224,6 +224,29 @@ const SouratesPage = () => {
         filter: `user_id=eq.${user.id}`,
       }, (payload) => {
         const newRecord = payload.new as any;
+        if (newRecord.status === 'refused') {
+          // Admin refused - notify student and delete request so they can retry
+          let sourateName = '';
+          for (const [num, id] of dbSourates.entries()) {
+            if (id === newRecord.sourate_id) {
+              sourateName = SOURATES_DATA.find(s => s.number === num)?.name_french || '';
+              break;
+            }
+          }
+          toast({
+            title: '📖 Sourate à retravailler',
+            description: `Ton professeur t'invite à retravailler ${sourateName}. Continue tes efforts !`,
+          });
+          // Reset progress so student can retry
+          setSourateProgress(prev => {
+            const newMap = new Map(prev);
+            const existing = newMap.get(newRecord.sourate_id);
+            if (existing) newMap.set(newRecord.sourate_id, { ...existing, is_validated: false });
+            return newMap;
+          });
+          // Delete refused request so student can submit again
+          supabase.from('sourate_validation_requests').delete().eq('id', newRecord.id).then(() => {});
+        }
         if (newRecord.status === 'approved') {
           const approvedSourateId = newRecord.sourate_id;
           // Mark sourate as validated

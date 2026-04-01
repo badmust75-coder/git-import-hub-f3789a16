@@ -107,6 +107,16 @@ const Nourania = () => {
         table: 'nourania_validation_requests',
         filter: `user_id=eq.${user.id}`,
       }, (payload) => {
+        if (payload.new && (payload.new as any).status === 'refused') {
+          queryClient.invalidateQueries({ queryKey: ['nourania-validation-requests'] });
+          const refusedLessonId = (payload.new as any).lesson_id;
+          const lesson = lessons.find(l => l.id === refusedLessonId);
+          toast.error(`📖 Ton professeur t'invite à retravailler ${lesson?.title_french || 'ta leçon'}. Continue tes efforts !`);
+          // Delete refused request so student can submit again
+          supabase.from('nourania_validation_requests').delete().eq('id', (payload.new as any).id).then(() => {
+            queryClient.invalidateQueries({ queryKey: ['nourania-validation-requests'] });
+          });
+        }
         if (payload.new && (payload.new as any).status === 'approved') {
           queryClient.invalidateQueries({ queryKey: ['nourania-progress'] });
           queryClient.invalidateQueries({ queryKey: ['nourania-validation-requests'] });

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, Clock, ArrowLeft, User } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, ArrowLeft, User } from 'lucide-react';
 import { useEffect } from 'react';
 
 interface AdminSourateValidationsProps {
@@ -106,6 +106,38 @@ const AdminSourateValidations = ({ onBack }: AdminSourateValidationsProps) => {
     },
   });
 
+  const refuseMutation = useMutation({
+    mutationFn: async (request: any) => {
+      const { error } = await supabase
+        .from('sourate_validation_requests')
+        .update({
+          status: 'refused',
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: user?.id,
+        })
+        .eq('id', request.id);
+      if (error) throw error;
+    },
+    onSuccess: (_, request) => {
+      toast({
+        title: `❌ Sourate refusée`,
+        description: `${request.sourate?.name_french || 'Sourate'} refusée pour ${request.profile?.full_name || 'l\'élève'}`,
+      });
+
+      sendPushNotification({
+        title: '📖 Sourate à retravailler',
+        body: `Ton professeur t'invite à retravailler ${request.sourate?.name_french || 'ta sourate'}. Continue tes efforts !`,
+        type: 'user',
+        userId: request.user_id,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['admin-sourate-validations'] });
+    },
+    onError: () => {
+      toast({ title: 'Erreur lors du refus', variant: 'destructive' });
+    },
+  });
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4 mb-6">
@@ -155,15 +187,27 @@ const AdminSourateValidations = ({ onBack }: AdminSourateValidationsProps) => {
                       </p>
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    className="bg-green-500 hover:bg-green-600 text-white"
-                    onClick={() => approveMutation.mutate(req)}
-                    disabled={approveMutation.isPending}
-                  >
-                    <CheckCircle className="h-4 w-4 mr-1" />
-                    Valider
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-red-300 text-red-600 hover:bg-red-50"
+                      onClick={() => refuseMutation.mutate(req)}
+                      disabled={refuseMutation.isPending || approveMutation.isPending}
+                    >
+                      <XCircle className="h-4 w-4 mr-1" />
+                      Refuser
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-green-500 hover:bg-green-600 text-white"
+                      onClick={() => approveMutation.mutate(req)}
+                      disabled={approveMutation.isPending || refuseMutation.isPending}
+                    >
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      Valider
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
