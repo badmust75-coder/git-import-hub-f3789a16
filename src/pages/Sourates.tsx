@@ -455,7 +455,7 @@ const SouratesPage = () => {
           dbId={dbSourates.get(selectedSourate.number)}
           verseProgress={verseProgress}
           sourateProgress={dbSourates.get(selectedSourate.number) ? sourateProgress.get(dbSourates.get(selectedSourate.number)!) : undefined}
-          contents={dbSourates.get(selectedSourate.number) ? sourateContents.filter(c => c.sourate_id === dbSourates.get(selectedSourate.number)) : []}
+          contents={dbSourates.get(selectedSourate.number) ? sourateContents.filter(c => c.sourate_id === dbSourates.get(selectedSourate.number) && (!c.target_user_id || c.target_user_id === user?.id)) : []}
           onVerseToggle={handleVerseToggle}
         />
       )}

@@ -272,8 +272,17 @@ const SourateDetailDialog = ({
         .then(({ data }) => {
           setVideoUrl((data as any)?.video_url || null);
         });
+
+      // Mark targeted content as viewed
+      const targetedIds = contents.filter((c: any) => c.target_user_id && !c.viewed_at).map((c: any) => c.id);
+      if (targetedIds.length > 0) {
+        (supabase as any).from('sourate_content')
+          .update({ viewed_at: new Date().toISOString() })
+          .in('id', targetedIds)
+          .then(() => {});
+      }
     }
-  }, [open, dbId]);
+  }, [open, dbId, contents]);
 
   if (!dbId) return null;
 

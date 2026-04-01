@@ -232,7 +232,20 @@ const Nourania = () => {
 
   const handleLessonClick = (lesson: typeof lessons[0], index: number) => {
     if (!isLessonUnlocked(index)) return;
-    setExpandedLesson(expandedLesson === lesson.id ? null : lesson.id);
+    const willExpand = expandedLesson !== lesson.id;
+    setExpandedLesson(willExpand ? lesson.id : null);
+    // Mark targeted content as viewed when expanding
+    if (willExpand && user?.id) {
+      const targetedIds = lessonContents
+        .filter(c => c.lesson_id === lesson.id && c.target_user_id === user.id && !c.viewed_at)
+        .map(c => c.id);
+      if (targetedIds.length > 0) {
+        (supabase as any).from('nourania_lesson_content')
+          .update({ viewed_at: new Date().toISOString() })
+          .in('id', targetedIds)
+          .then(() => {});
+      }
+    }
   };
 
   // Get moon color classes based on lesson status
@@ -283,7 +296,7 @@ const Nourania = () => {
             const isPending = isLessonPendingValidation(lesson.id);
             const unlocked = isLessonUnlocked(index);
             const isExpanded = expandedLesson === lesson.id;
-            const contents = lessonContents.filter(c => c.lesson_id === lesson.id);
+            const contents = lessonContents.filter(c => c.lesson_id === lesson.id && (!c.target_user_id || c.target_user_id === user?.id));
 
             return (
               <div

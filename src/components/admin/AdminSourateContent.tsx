@@ -4,15 +4,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Unlock, Lock, Upload, Trash2 } from 'lucide-react';
+import { Unlock, Lock, Upload, Trash2, Eye, EyeOff, UserCheck } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import ConfirmDeleteDialog from '@/components/ui/confirm-delete-dialog';
 import ContentUploadTabs from './ContentUploadTabs';
 import ContentItemCard, { ContentType } from './ContentItemCard';
 import AdminSourateVersets from './AdminSourateVersets';
 
-function SourateAdminCard({ sourate, sourateContents, mapContentType, setDeleteContentId, updateTitleMutation, deleteMutation, uploadToStorage, handleAddYoutube, handleUploadAudioComplet, handleDeleteAudioComplet, chargerSourates, isUploading }: any) {
+function SourateAdminCard({ sourate, sourateContents, mapContentType, setDeleteContentId, updateTitleMutation, deleteMutation, uploadToStorage, handleAddYoutube, handleUploadAudioComplet, handleDeleteAudioComplet, chargerSourates, isUploading, profiles }: any) {
   const [lienVideo, setLienVideo] = useState(sourate.video_url || '');
+  const [targetStudent, setTargetStudent] = useState<string>('');
 
   const extraireYoutubeId = (url: string) => {
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
@@ -111,26 +112,59 @@ function SourateAdminCard({ sourate, sourateContents, mapContentType, setDeleteC
         </div>
         {sourateContents.length > 0 && (
           <div className="space-y-1.5">
-            {sourateContents.map((content: any) => (
-              <ContentItemCard
-                key={content.id}
-                id={content.id}
-                title={content.file_name}
-                contentType={mapContentType(content.content_type)}
-                url={content.file_url}
-                onDelete={(id: string) => setDeleteContentId(id)}
-                onUpdateTitle={(id: string, title: string) => updateTitleMutation.mutate({ id, title })}
-                deleteDisabled={deleteMutation.isPending}
-              />
-            ))}
+            {sourateContents.map((content: any) => {
+              const studentName = content.target_user_id
+                ? (profiles || []).find((p: any) => p.user_id === content.target_user_id)?.full_name || 'Élève'
+                : null;
+              return (
+                <div key={content.id}>
+                  <ContentItemCard
+                    id={content.id}
+                    title={content.file_name}
+                    contentType={mapContentType(content.content_type)}
+                    url={content.file_url}
+                    onDelete={(id: string) => setDeleteContentId(id)}
+                    onUpdateTitle={(id: string, title: string) => updateTitleMutation.mutate({ id, title })}
+                    deleteDisabled={deleteMutation.isPending}
+                  />
+                  {studentName && (
+                    <div className="flex items-center gap-2 ml-8 mt-0.5 text-xs">
+                      <UserCheck className="h-3 w-3 text-blue-500" />
+                      <span className="text-blue-600 font-medium">→ {studentName}</span>
+                      {content.viewed_at ? (
+                        <span className="flex items-center gap-1 text-green-600"><Eye className="h-3 w-3" />Vu</span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-orange-500"><EyeOff className="h-3 w-3" />Non vu</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
         {sourateContents.length === 0 && <p className="text-xs text-muted-foreground italic">Aucun contenu</p>}
         <AdminSourateVersets sourate={sourate} />
+        {/* Student selector for targeted upload */}
+        <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl p-3 border border-blue-200 dark:border-blue-800">
+          <p className="text-xs font-semibold text-blue-800 dark:text-blue-300 mb-2">
+            📩 Destinataire du prochain contenu
+          </p>
+          <select
+            className="w-full p-2 border rounded-lg bg-background text-foreground text-sm"
+            value={targetStudent}
+            onChange={(e) => setTargetStudent(e.target.value)}
+          >
+            <option value="">Tous les élèves (global)</option>
+            {(profiles || []).map((p: any) => (
+              <option key={p.user_id} value={p.user_id}>{p.full_name || p.email || 'Élève'}</option>
+            ))}
+          </select>
+        </div>
         <ContentUploadTabs
-          onUploadFile={(file: File) => uploadToStorage(sourate.id, file, 'fichier')}
-          onAddYoutubeLink={(url: string) => handleAddYoutube(sourate.id, url)}
-          onUploadAudio={(file: File) => uploadToStorage(sourate.id, file, 'audio')}
+          onUploadFile={(file: File) => uploadToStorage(sourate.id, file, 'fichier', targetStudent || undefined)}
+          onAddYoutubeLink={(url: string) => handleAddYoutube(sourate.id, url, targetStudent || undefined)}
+          onUploadAudio={(file: File) => uploadToStorage(sourate.id, file, 'audio', targetStudent || undefined)}
           isUploading={isUploading}
         />
       </CardContent>
@@ -180,7 +214,7 @@ const AdminSourateContent = () => {
     },
   });
 
-  const uploadToStorage = useCallback(async (sourateId: string, file: File, contentType: string) => {
+  const uploadToStorage = useCallback(async (sourateId: string, file: File, contentType: string, targetUserId?: string) => {
     if (!user?.id) { toast.error('Vous devez être connecté'); return; }
     setIsUploading(true);
     try {
@@ -192,32 +226,38 @@ const AdminSourateContent = () => {
       if (uploadError) { toast.error(`Erreur upload: ${uploadError.message}`); return; }
       const { data: urlData } = supabase.storage.from('sourate-content').getPublicUrl(filePath);
       const defaultTitle = contentType === 'audio' ? 'Audio' : file.name;
-      const { error: insertError } = await supabase.from('sourate_content').insert({
+      const insertData: any = {
         sourate_id: sourateId, content_type: contentType, file_url: urlData.publicUrl,
         file_name: defaultTitle, display_order: existingCount, uploaded_by: user.id,
-      });
+      };
+      if (targetUserId) insertData.target_user_id = targetUserId;
+      const { error: insertError } = await supabase.from('sourate_content').insert(insertData);
       if (insertError) { toast.error(`Erreur: ${insertError.message}`); return; }
       await refetchContents();
-      toast.success('Contenu ajouté ✅');
+      const studentName = targetUserId ? profiles.find((p: any) => p.user_id === targetUserId)?.full_name : null;
+      toast.success(studentName ? `Contenu envoyé à ${studentName} ✅` : 'Contenu ajouté ✅');
     } catch (error) { console.error(error); }
     finally { setIsUploading(false); }
-  }, [user, contents, refetchContents]);
+  }, [user, contents, profiles, refetchContents]);
 
-  const handleAddYoutube = useCallback(async (sourateId: string, embedUrl: string) => {
+  const handleAddYoutube = useCallback(async (sourateId: string, embedUrl: string, targetUserId?: string) => {
     if (!user?.id) return;
     setIsUploading(true);
     try {
       const existingCount = contents.filter(c => c.sourate_id === sourateId).length;
-      const { error } = await supabase.from('sourate_content').insert({
+      const insertData: any = {
         sourate_id: sourateId, content_type: 'youtube', file_url: embedUrl,
         file_name: 'Vidéo YouTube', display_order: existingCount, uploaded_by: user.id,
-      });
+      };
+      if (targetUserId) insertData.target_user_id = targetUserId;
+      const { error } = await supabase.from('sourate_content').insert(insertData);
       if (error) { toast.error(error.message); return; }
       await refetchContents();
-      toast.success('Lien YouTube ajouté ✅');
+      const studentName = targetUserId ? profiles.find((p: any) => p.user_id === targetUserId)?.full_name : null;
+      toast.success(studentName ? `Lien envoyé à ${studentName} ✅` : 'Lien YouTube ajouté ✅');
     } catch (error) { console.error(error); }
     finally { setIsUploading(false); }
-  }, [user, contents, refetchContents]);
+  }, [user, contents, profiles, refetchContents]);
 
   const updateTitleMutation = useMutation({
     mutationFn: async ({ id, title }: { id: string; title: string }) => {
@@ -358,6 +398,7 @@ const AdminSourateContent = () => {
               handleDeleteAudioComplet={handleDeleteAudioComplet}
               chargerSourates={chargerSourates}
               isUploading={isUploading}
+              profiles={profiles}
             />
           );
         })}
