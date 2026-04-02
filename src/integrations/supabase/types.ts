@@ -220,6 +220,36 @@ export type Database = {
         }
         Relationships: []
       }
+      app_versions: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_current: boolean | null
+          label: string
+          snapshot: Json | null
+          version_number: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_current?: boolean | null
+          label: string
+          snapshot?: Json | null
+          version_number: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_current?: boolean | null
+          label?: string
+          snapshot?: Json | null
+          version_number?: string
+        }
+        Relationships: []
+      }
       attendance_records: {
         Row: {
           created_at: string | null
@@ -1028,7 +1058,9 @@ export type Database = {
           file_url: string
           id: string
           lesson_id: string
+          target_user_id: string | null
           uploaded_by: string | null
+          viewed_at: string | null
         }
         Insert: {
           content_type?: string
@@ -1038,7 +1070,9 @@ export type Database = {
           file_url: string
           id?: string
           lesson_id: string
+          target_user_id?: string | null
           uploaded_by?: string | null
+          viewed_at?: string | null
         }
         Update: {
           content_type?: string
@@ -1048,7 +1082,9 @@ export type Database = {
           file_url?: string
           id?: string
           lesson_id?: string
+          target_user_id?: string | null
           uploaded_by?: string | null
+          viewed_at?: string | null
         }
         Relationships: [
           {
@@ -1842,7 +1878,9 @@ export type Database = {
           file_url: string
           id: string
           sourate_id: string
+          target_user_id: string | null
           uploaded_by: string | null
+          viewed_at: string | null
         }
         Insert: {
           content_type?: string
@@ -1852,7 +1890,9 @@ export type Database = {
           file_url: string
           id?: string
           sourate_id: string
+          target_user_id?: string | null
           uploaded_by?: string | null
+          viewed_at?: string | null
         }
         Update: {
           content_type?: string
@@ -1862,7 +1902,9 @@ export type Database = {
           file_url?: string
           id?: string
           sourate_id?: string
+          target_user_id?: string | null
           uploaded_by?: string | null
+          viewed_at?: string | null
         }
         Relationships: [
           {
