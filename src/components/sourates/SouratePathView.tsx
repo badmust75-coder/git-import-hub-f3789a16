@@ -169,6 +169,11 @@ const SouratePathView = ({
           50% { filter: drop-shadow(0 0 12px hsl(40, 90%, 60%)); transform: scale(1.06); }
         }
         .star-current { animation: star-glow 2s ease-in-out infinite; }
+        @keyframes ayat-kursi-halo {
+          0%, 100% { filter: drop-shadow(0 0 6px hsl(38, 90%, 50%)) drop-shadow(0 0 14px hsl(38, 80%, 45%)); transform: scale(1); }
+          50% { filter: drop-shadow(0 0 12px hsl(38, 95%, 55%)) drop-shadow(0 0 24px hsl(38, 85%, 50%)); transform: scale(1.08); }
+        }
+        .star-ayat-kursi { animation: ayat-kursi-halo 2.5s ease-in-out infinite; }
       `}</style>
 
       <div className="relative" style={{ width: TOTAL_WIDTH, minHeight: totalHeight }}>
@@ -231,6 +236,7 @@ const SouratePathView = ({
           const { isValidated, accessible } = getNodeState(node.sourate.number);
           const isCurrent = i === currentIndex;
           const isGift = GIFT_SOURATE_NUMBERS.has(node.sourate.number);
+          const isAyatKursi = node.sourate.number === 1000;
 
           return (
             <div
@@ -257,7 +263,8 @@ const SouratePathView = ({
                 className={cn(
                   'relative flex items-center justify-center transition-transform duration-200',
                   accessible && !isValidated && 'hover:scale-110',
-                  isCurrent && 'star-current',
+                  isAyatKursi && !isValidated && 'star-ayat-kursi',
+                  isCurrent && !isAyatKursi && 'star-current',
                   !accessible && 'cursor-not-allowed'
                 )}
                 style={{ width: STAR_SIZE, height: STAR_SIZE }}
@@ -265,9 +272,9 @@ const SouratePathView = ({
                 <svg viewBox="0 0 48 48" className="w-full h-full drop-shadow-md">
                   <path
                     d="M24 2 L29.5 17.5 L46 17.5 L33 27.5 L37.5 44 L24 34 L10.5 44 L15 27.5 L2 17.5 L18.5 17.5 Z"
-                    fill={getStarFill(isValidated, accessible)}
-                    stroke={getStarStroke(isValidated, accessible, isCurrent)}
-                    strokeWidth={isValidated || isCurrent ? 3 : 1.5}
+                    fill={isAyatKursi && !isValidated ? 'hsl(38, 90%, 50%)' : getStarFill(isValidated, accessible)}
+                    stroke={isAyatKursi && !isValidated ? 'hsl(30, 85%, 40%)' : getStarStroke(isValidated, accessible, isCurrent)}
+                    strokeWidth={isValidated || isCurrent || isAyatKursi ? 3 : 1.5}
                   />
                 </svg>
 
