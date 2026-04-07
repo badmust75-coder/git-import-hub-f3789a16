@@ -378,6 +378,13 @@ const SourateDetailDialog = ({
                       <span className="text-sm">{content.file_name}</span>
                     </a>
                   )}
+                  {content.content_type === 'fichier' && (
+                    <a href={content.file_url} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
+                      <FileText className="h-5 w-5 text-primary" />
+                      <span className="text-sm">{content.file_name}</span>
+                    </a>
+                  )}
                 </div>
               ))}
             </div>
