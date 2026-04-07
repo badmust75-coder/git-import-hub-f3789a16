@@ -350,6 +350,12 @@ const SourateDetailDialog = ({
                       />
                     </div>
                   )}
+                  {content.content_type === 'youtube' && (
+                    <div>
+                      <p className="text-sm font-semibold text-foreground mb-2">🎬 {content.file_name || 'Vidéo YouTube'}</p>
+                      <LecteurVideoSourate videoUrl={content.file_url} />
+                    </div>
+                  )}
                   {content.content_type === 'video' && (
                     <video controls className="w-full rounded-lg" src={content.file_url}>
                       Votre navigateur ne supporte pas la lecture vidéo.
