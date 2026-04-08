@@ -175,6 +175,35 @@ const AdminStudentDetails = ({ onBack }: AdminStudentDetailsProps) => {
     }
   };
 
+  const openPasswordDialog = (student: any) => {
+    setPwdDialogStudent({ id: student.user_id, full_name: student.full_name, plain_password: student.plain_password || null });
+    setNewPassword('');
+    setShowCurrentPwd(false);
+    setShowNewPwd(false);
+  };
+
+  const handleSavePassword = async () => {
+    if (!pwdDialogStudent || newPassword.length < 6) return;
+    setSavingPwd(true);
+    try {
+      const res = await supabase.functions.invoke('update-user-password', {
+        body: { user_id: pwdDialogStudent.id, new_password: newPassword },
+      });
+      if (res.error) throw new Error(res.error.message || 'Erreur');
+      const body = res.data as any;
+      if (body?.error) throw new Error(body.error);
+
+      toast.success('Mot de passe mis à jour ✓');
+      queryClient.invalidateQueries({ queryKey: ['admin-students-details'] });
+      setPwdDialogStudent(null);
+      setNewPassword('');
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur');
+    } finally {
+      setSavingPwd(false);
+    }
+  };
+
   const progressBar = (value: number, total: number, label: string, icon: React.ReactNode) => {
     const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
     return (
