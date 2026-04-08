@@ -1,17 +1,25 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Search, User, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, User, MoreVertical, Eye, EyeOff, KeyRound, BarChart2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
 import AdminStudentGroups from './AdminStudentGroups';
 
 interface StudentProgress {
@@ -26,6 +34,12 @@ interface StudentProgress {
 const AdminStudents = () => {
   const [search, setSearch] = useState('');
   const [selectedStudent, setSelectedStudent] = useState<{ id: string; email: string; full_name: string | null } | null>(null);
+  const [passwordStudent, setPasswordStudent] = useState<{ id: string; full_name: string | null; plain_password: string | null } | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: students, isLoading } = useQuery({
     queryKey: ['admin-students'],
@@ -33,7 +47,7 @@ const AdminStudents = () => {
       const [{ data: profiles, error: profilesError }, { data: studentRoles, error: rolesError }] = await Promise.all([
         supabase
           .from('profiles')
-          .select('user_id, email, full_name, created_at')
+          .select('user_id, email, full_name, created_at, plain_password')
           .eq('is_approved', true),
         supabase
           .from('user_roles')
@@ -117,6 +131,29 @@ const AdminStudents = () => {
     s.full_name?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleSavePassword = async () => {
+    if (!passwordStudent || !newPassword) return;
+    if (newPassword.length < 6) {
+      toast.error('Le mot de passe doit contenir au moins 6 caractères');
+      return;
+    }
+    setSavingPassword(true);
+    try {
+      const response = await supabase.functions.invoke('update-user-password', {
+        body: { user_id: passwordStudent.id, new_password: newPassword },
+      });
+      if (response.error) throw new Error(response.error.message);
+      toast.success(`Mot de passe de ${passwordStudent.full_name || "l'élève"} modifié ✅`);
+      queryClient.invalidateQueries({ queryKey: ['admin-students'] });
+      setPasswordStudent(null);
+      setNewPassword('');
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur lors de la modification');
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -141,10 +178,8 @@ const AdminStudents = () => {
 
   return (
     <div className="space-y-6">
-      {/* Groups section */}
       <AdminStudentGroups />
 
-      {/* Separator */}
       <div className="border-t pt-4">
         <h3 className="text-base font-semibold text-foreground mb-3">📋 Liste des élèves</h3>
       </div>
@@ -161,28 +196,54 @@ const AdminStudents = () => {
 
       <div className="space-y-2">
         {filteredStudents?.map((student) => (
-          <Card
-            key={student.user_id}
-            className="cursor-pointer hover:bg-muted/50 transition-colors"
-            onClick={() => setSelectedStudent({
-              id: student.user_id,
-              email: student.email || '',
-              full_name: student.full_name,
-            })}
-          >
+          <Card key={student.user_id} className="hover:bg-muted/50 transition-colors">
             <CardContent className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <User className="h-5 w-5 text-primary" />
                 </div>
-                <div>
-                  <p className="font-medium text-foreground">
+                <div className="min-w-0">
+                  <p className="font-medium text-foreground truncate">
                     {student.full_name || 'Élève sans nom'}
                   </p>
-                  <p className="text-sm text-muted-foreground">{student.email}</p>
+                  <p className="text-sm text-muted-foreground truncate">{student.email}</p>
                 </div>
               </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="shrink-0 ml-2" onClick={e => e.stopPropagation()}>
+                    <MoreVertical className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => setSelectedStudent({
+                      id: student.user_id,
+                      email: student.email || '',
+                      full_name: student.full_name,
+                    })}
+                  >
+                    <BarChart2 className="h-4 w-4 mr-2" />
+                    Voir la progression
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setPasswordStudent({
+                        id: student.user_id,
+                        full_name: student.full_name,
+                        plain_password: (student as any).plain_password || null,
+                      });
+                      setNewPassword('');
+                      setShowCurrent(false);
+                      setShowNew(false);
+                    }}
+                  >
+                    <KeyRound className="h-4 w-4 mr-2" />
+                    Modifier le mot de passe
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </CardContent>
           </Card>
         ))}
@@ -194,6 +255,7 @@ const AdminStudents = () => {
         )}
       </div>
 
+      {/* Dialog progression */}
       <Dialog open={!!selectedStudent} onOpenChange={() => setSelectedStudent(null)}>
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto" level="nested">
           <DialogHeader>
@@ -209,67 +271,48 @@ const AdminStudents = () => {
                 <p className="text-sm text-muted-foreground mb-1">Email</p>
                 <p className="font-medium">{selectedStudent?.email}</p>
               </div>
-
               <div className="space-y-3">
                 <h4 className="font-semibold text-foreground">Progression par module</h4>
-                
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="text-sm">Sourates</span>
-                      <Badge variant="outline">
-                        {Math.round((studentProgress.sourates.validated / Math.max(studentProgress.sourates.total, 1)) * 100)}%
-                      </Badge>
+                      <Badge variant="outline">{Math.round((studentProgress.sourates.validated / Math.max(studentProgress.sourates.total, 1)) * 100)}%</Badge>
                     </div>
                     {progressBar(studentProgress.sourates.validated, studentProgress.sourates.total)}
                   </div>
-
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="text-sm">Ramadan</span>
-                      <Badge variant="outline">
-                        {Math.round((studentProgress.ramadan.completed / Math.max(studentProgress.ramadan.total, 1)) * 100)}%
-                      </Badge>
+                      <Badge variant="outline">{Math.round((studentProgress.ramadan.completed / Math.max(studentProgress.ramadan.total, 1)) * 100)}%</Badge>
                     </div>
                     {progressBar(studentProgress.ramadan.completed, studentProgress.ramadan.total)}
                   </div>
-
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="text-sm">Nourania</span>
-                      <Badge variant="outline">
-                        {Math.round((studentProgress.nourania.validated / Math.max(studentProgress.nourania.total, 1)) * 100)}%
-                      </Badge>
+                      <Badge variant="outline">{Math.round((studentProgress.nourania.validated / Math.max(studentProgress.nourania.total, 1)) * 100)}%</Badge>
                     </div>
                     {progressBar(studentProgress.nourania.validated, studentProgress.nourania.total)}
                   </div>
-
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="text-sm">Prière</span>
-                      <Badge variant="outline">
-                        {Math.round((studentProgress.prayer.validated / Math.max(studentProgress.prayer.total, 1)) * 100)}%
-                      </Badge>
+                      <Badge variant="outline">{Math.round((studentProgress.prayer.validated / Math.max(studentProgress.prayer.total, 1)) * 100)}%</Badge>
                     </div>
                     {progressBar(studentProgress.prayer.validated, studentProgress.prayer.total)}
                   </div>
-
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="text-sm">Alphabet</span>
-                      <Badge variant="outline">
-                        {Math.round((studentProgress.alphabet.validated / Math.max(studentProgress.alphabet.total, 1)) * 100)}%
-                      </Badge>
+                      <Badge variant="outline">{Math.round((studentProgress.alphabet.validated / Math.max(studentProgress.alphabet.total, 1)) * 100)}%</Badge>
                     </div>
                     {progressBar(studentProgress.alphabet.validated, studentProgress.alphabet.total)}
                   </div>
-
                   <div>
                     <div className="flex justify-between mb-1">
                       <span className="text-sm">Invocations</span>
-                      <Badge variant="outline">
-                        {Math.round((studentProgress.invocations.memorized / Math.max(studentProgress.invocations.total, 1)) * 100)}%
-                      </Badge>
+                      <Badge variant="outline">{Math.round((studentProgress.invocations.memorized / Math.max(studentProgress.invocations.total, 1)) * 100)}%</Badge>
                     </div>
                     {progressBar(studentProgress.invocations.memorized, studentProgress.invocations.total)}
                   </div>
@@ -277,6 +320,68 @@ const AdminStudents = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog mot de passe */}
+      <Dialog open={!!passwordStudent} onOpenChange={() => setPasswordStudent(null)}>
+        <DialogContent className="max-w-sm" level="nested">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5" />
+              Mot de passe — {passwordStudent?.full_name || 'Élève'}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-2">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Mot de passe actuel</p>
+              <div className="relative">
+                <Input
+                  type={showCurrent ? 'text' : 'password'}
+                  value={passwordStudent?.plain_password || ''}
+                  readOnly
+                  className="pr-10 bg-muted/50"
+                  placeholder={passwordStudent?.plain_password ? '' : 'Non enregistré'}
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowCurrent(v => !v)}
+                >
+                  {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Nouveau mot de passe</p>
+              <div className="relative">
+                <Input
+                  type={showNew ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="pr-10"
+                  placeholder="Minimum 6 caractères"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowNew(v => !v)}
+                >
+                  {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <Button
+              className="w-full"
+              onClick={handleSavePassword}
+              disabled={!newPassword || savingPassword}
+            >
+              {savingPassword ? 'Enregistrement...' : 'Enregistrer le nouveau mot de passe'}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
