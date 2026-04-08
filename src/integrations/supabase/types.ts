@@ -1399,6 +1399,7 @@ export type Database = {
           notification_prompt_later_at: string | null
           notification_prompt_later_count: number | null
           phone: string | null
+          plain_password: string | null
           points: number | null
           updated_at: string | null
           user_id: string
@@ -1421,6 +1422,7 @@ export type Database = {
           notification_prompt_later_at?: string | null
           notification_prompt_later_count?: number | null
           phone?: string | null
+          plain_password?: string | null
           points?: number | null
           updated_at?: string | null
           user_id: string
@@ -1443,6 +1445,7 @@ export type Database = {
           notification_prompt_later_at?: string | null
           notification_prompt_later_count?: number | null
           phone?: string | null
+          plain_password?: string | null
           points?: number | null
           updated_at?: string | null
           user_id?: string
