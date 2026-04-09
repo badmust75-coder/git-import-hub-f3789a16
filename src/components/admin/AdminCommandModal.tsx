@@ -10,7 +10,6 @@ import AdminNotifications from '@/components/admin/AdminNotifications';
 import AdminStudentDetails from '@/components/admin/AdminStudentDetails';
 import AdminAttendance from '@/components/admin/AdminAttendance';
 import AdminRecitationReview from '@/components/admin/AdminRecitationReview';
-import AdminUsersList from '@/components/admin/AdminUsersList';
 
 interface AdminCommandModalProps {
   open: boolean;
@@ -30,14 +29,13 @@ const BOUTONS_ACTIONS = [
   { id: 'recitations', label: 'Récitations à corriger', section: 'recitations-audio', emoji: '🎙️' },
   { id: 'sourates', label: 'Sourates à valider', section: 'sourates-validations', emoji: '📖' },
   { id: 'nourania', label: 'Nourania à valider', section: 'nourania-validations', emoji: '🔤' },
-  { id: 'inscriptions', label: 'Inscriptions', section: 'users', emoji: '📝' },
 ];
 
 const BOUTONS_MODULES = [
   { id: 'eleves', label: 'Élèves', section: 'eleves', emoji: '👨‍🎓' },
   { id: 'registre', label: 'Registre', section: 'registre-presence', emoji: '📋' },
   { id: 'cahier', label: 'Cahier de texte', section: 'cahier-texte-module', emoji: '📓' },
-  { id: 'utilisateurs', label: 'Utilisateurs', section: 'utilisateurs-list', emoji: '👥' },
+  { id: 'inscriptions', label: 'Inscriptions', section: 'users', emoji: '📝' },
 ];
 
 const AdminCommandModal = ({
@@ -55,7 +53,6 @@ const AdminCommandModal = ({
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   const compteurs: Record<string, number> = {
-    inscriptions: pendingRegistrations,
     sourates: pendingSourates,
     nourania: pendingNourania,
     devoirs: pendingHomework,
@@ -292,8 +289,6 @@ function AdminSectionRenderer({
       return <AdminStudentDetails onBack={onClose} />;
     case 'registre-presence':
       return <AdminAttendance onBack={onClose} />;
-    case 'utilisateurs-list':
-      return <AdminUsersList onBack={onClose} />;
     default:
       return (
         <p className="text-muted-foreground text-center py-8">

@@ -271,6 +271,11 @@ const AdminStudentDetails = ({ onBack }: AdminStudentDetailsProps) => {
                 <div>
                   <p className="font-medium text-foreground">{student.full_name || 'Élève'}</p>
                   <p className="text-sm text-muted-foreground">{student.email}</p>
+                  {student.created_at && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                      📅 Inscrit le {new Date(student.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </p>
+                  )}
                 </div>
               </div>
               <DropdownMenu>
