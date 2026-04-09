@@ -60,7 +60,7 @@ const AdminCommandModal = ({
   };
 
   useEffect(() => {
-    const saved = localStorage.getItem('admin_boutons_order');
+    const saved = localStorage.getItem('admin_boutons_order_v3');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -68,7 +68,7 @@ const AdminCommandModal = ({
           setBoutons(parsed);
         } else if (Array.isArray(parsed) && parsed.length !== BOUTONS_ACTIONS.length) {
           // Nouvelle carte ajoutée → reset l'ordre sauvegardé
-          localStorage.removeItem('admin_boutons_order');
+          localStorage.removeItem('admin_boutons_order_v3');
         }
       } catch { /* ignore */ }
     }
@@ -81,7 +81,7 @@ const AdminCommandModal = ({
     newBoutons.splice(index, 0, moved);
     setBoutons(newBoutons);
     setDragIndex(index);
-    localStorage.setItem('admin_boutons_order', JSON.stringify(newBoutons));
+    localStorage.setItem('admin_boutons_order_v3', JSON.stringify(newBoutons));
   };
 
   const onClose = () => onOpenChange(false);
