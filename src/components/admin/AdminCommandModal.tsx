@@ -7,7 +7,7 @@ import AdminNouraniaValidations from '@/components/admin/AdminNouraniaValidation
 import AdminHomework from '@/components/admin/AdminHomework';
 import AdminGlobalStats from '@/components/admin/AdminGlobalStats';
 import AdminNotifications from '@/components/admin/AdminNotifications';
-import AdminStudents from '@/components/admin/AdminStudents';
+import AdminStudentDetails from '@/components/admin/AdminStudentDetails';
 import AdminAttendance from '@/components/admin/AdminAttendance';
 import AdminRecitationReview from '@/components/admin/AdminRecitationReview';
 import AdminUsersList from '@/components/admin/AdminUsersList';
@@ -289,7 +289,7 @@ function AdminSectionRenderer({
     case 'notifications':
       return <AdminNotifications />;
     case 'eleves':
-      return <AdminStudents />;
+      return <AdminStudentDetails onBack={onClose} />;
     case 'registre-presence':
       return <AdminAttendance onBack={onClose} />;
     case 'utilisateurs-list':
