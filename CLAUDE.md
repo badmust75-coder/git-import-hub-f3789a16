@@ -77,6 +77,16 @@ Toutes les validations (inscriptions, sourates, nourania, invocations) disposent
 
 Les cartes `students`, `messages`, `attendance`, `homework`, `recitations` dans `ADMIN_ONLY_CARDS` n'affichent jamais le toggle de visibilité élèves (pas d'icône œil).
 
+## Panneau admin (🛡️) — AdminCommandModal
+
+- **Boutons actions** (grands, avec badge rouge si en attente) : 📚 Devoirs · 🎙️ Récitations · 📖 Sourates · 🔤 Nourania
+- **Modules** (grille 2 colonnes) : 👨‍🎓 Élèves · 📋 Registre · 📓 Cahier de texte · 📝 Inscriptions
+- La clé localStorage est `admin_boutons_order_v3` — à incrémenter si on ajoute/retire des boutons actions pour forcer un reset.
+- `AdminStudentDetails` est utilisé pour le bouton Élèves (pas `AdminStudents`). Le `DropdownMenuContent` doit avoir `className="z-[600]"` pour apparaître au-dessus de la modale (z-500).
+- Les `Dialog` imbriqués dans des composants affichés dans la modale doivent utiliser `level="nested"` (overlay z-500, content z-550).
+- Carte "Élèves" du tableau de bord supprimée (accessible uniquement via le panneau admin).
+- Popup "Bienvenue - Comment t'appelles-tu" supprimé de `Index.tsx` (le prénom est saisi à l'inscription).
+
 ## Récitations (fonctionnalité 2026-04-09)
 
 - Table `sourate_recitations` : `id`, `sourate_id`, `student_id`, `audio_url`, `student_comment`, `status` (pending/validated/corrected), `admin_audio_url`, `admin_comment`, `created_at`, `updated_at`.
@@ -84,6 +94,9 @@ Les cartes `students`, `messages`, `attendance`, `homework`, `recitations` dans 
 - **Côté élève** : `SourateRecitationPanel.tsx` dans `SourateDetailDialog.tsx` (au-dessus de la vidéo). Utilise MediaRecorder API → upload Supabase → insert en DB. Subscription realtime pour voir les réponses admin.
 - **Côté admin** : `AdminRecitationReview.tsx` accessible via la carte "Corriger audios" (ViewType `recitations`). Filtre par statut, lecture audio, champ commentaire, enregistrement audio de réponse, boutons Valider / Envoyer correction.
 - RLS : élèves voient leurs propres récitations ; admins voient et modifient toutes (`has_role(auth.uid(), 'admin'::app_role)`).
+- **Politique RLS admin** : si l'admin ne voit pas les récitations, relancer ce SQL : `DROP POLICY IF EXISTS "Admins full access on recitations" ON public.sourate_recitations; CREATE POLICY "Admins full access on recitations" ON public.sourate_recitations FOR ALL TO authenticated USING (public.has_role(auth.uid(), 'admin'::public.app_role)) WITH CHECK (public.has_role(auth.uid(), 'admin'::public.app_role));`
+- **Politique Storage** : bucket `recitations` public=true. Si les audios ne se lisent pas, relancer : `UPDATE storage.buckets SET public = true WHERE id = 'recitations'; DROP POLICY IF EXISTS "Public read recitations" ON storage.objects; CREATE POLICY "Public read recitations" ON storage.objects FOR SELECT USING (bucket_id = 'recitations');`
+- `useAdminPendingCounts` : inclut maintenant le count `recitations` (status=pending) avec abonnement realtime.
 
 ## Mot de passe admin (fonctionnalité 2026-04-08)
 
