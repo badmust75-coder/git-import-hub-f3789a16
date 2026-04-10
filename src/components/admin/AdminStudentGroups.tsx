@@ -96,7 +96,7 @@ const DraggableGroupCard = ({
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="z-[600]">
               <DropdownMenuItem onClick={() => onEdit(group)}>
                 <Pencil className="h-4 w-4 mr-2" /> Modifier
               </DropdownMenuItem>
