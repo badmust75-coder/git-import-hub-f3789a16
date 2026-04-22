@@ -44,7 +44,7 @@ const Classement = () => {
   const [classement, setClassement] = useState<ClassementEntry[]>([]);
   const [groupMembers, setGroupMembers] = useState<GroupMemberEntry[]>([]);
   const [myGroupId, setMyGroupId] = useState<string | null>(null);
-  const [vue, setVue] = useState<'global' | 'groupes'>(isAdmin ? 'global' : 'groupes');
+  const [vue, setVue] = useState<'global' | 'groupes'>('global');
   const [loading, setLoading] = useState(true);
 
   const chargerBareme = async () => {
@@ -202,19 +202,17 @@ const Classement = () => {
           </div>
         )}
 
-        {/* Toggle — Global seulement pour admin */}
+        {/* Toggle — Global visible pour tous (les noms sont anonymisés côté élève) */}
         <div className="flex gap-2 justify-center">
-          {isAdmin && (
-            <button
-              onClick={() => setVue('global')}
-              className="px-4 py-2 rounded-xl font-semibold text-sm transition-all"
-              style={{
-                backgroundColor: vue === 'global' ? 'hsl(var(--primary))' : 'hsl(var(--muted))',
-                color: vue === 'global' ? 'hsl(var(--primary-foreground))' : 'hsl(var(--muted-foreground))',
-              }}>
-              🌍 Global
-            </button>
-          )}
+          <button
+            onClick={() => setVue('global')}
+            className="px-4 py-2 rounded-xl font-semibold text-sm transition-all"
+            style={{
+              backgroundColor: vue === 'global' ? 'hsl(var(--primary))' : 'hsl(var(--muted))',
+              color: vue === 'global' ? 'hsl(var(--primary-foreground))' : 'hsl(var(--muted-foreground))',
+            }}>
+            🌍 Global
+          </button>
           <button
             onClick={() => setVue('groupes')}
             className="px-4 py-2 rounded-xl font-semibold text-sm transition-all"
@@ -231,7 +229,7 @@ const Classement = () => {
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ) : vue === 'global' && isAdmin ? (
+        ) : vue === 'global' ? (
           /* CLASSEMENT GLOBAL — admin seulement */
           classement.length === 0 ? (
             <div className="text-center py-8">
